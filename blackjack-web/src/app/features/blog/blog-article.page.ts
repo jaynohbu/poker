@@ -9,6 +9,9 @@ import { RoleAccessUseCase } from '../../core/use-cases/role-access.use-case';
 import { BlogApiService } from './blog-api.service';
 import { BlogArticle } from './blog.models';
 
+const INLINE_IMAGE_STYLE = 'max-width:min(15%,120px);width:min(15%,120px);height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
+const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:15%;max-width:15%;min-width:96px;margin:0 0 1rem 0;overflow:hidden;';
+
 @Component({
   selector: 'app-blog-article-page',
   imports: [RouterLink, DatePipe],
@@ -149,7 +152,8 @@ export class BlogArticlePage implements OnInit {
   }
 
   protected sanitizeHtml(raw: string): string {
-    return this.sanitizer.sanitize(SecurityContext.HTML, raw) ?? '';
+    const withInlineImageConstraints = applyInlineImageConstraints(raw);
+    return this.sanitizer.sanitize(SecurityContext.HTML, withInlineImageConstraints) ?? '';
   }
 
   async ngOnInit(): Promise<void> {
@@ -215,4 +219,28 @@ export class BlogArticlePage implements OnInit {
       this.showDeleteDialog.set(false);
     }
   }
+}
+
+function applyInlineImageConstraints(raw: string): string {
+  const withFigureStyle = raw.replace(/<figure\b([^>]*\bclass=(['"])[^'"]*\bblog-image\b[^'"]*\2[^>]*)>/gi, (_match, attrs: string) => {
+    return `<figure${mergeInlineStyle(attrs, INLINE_BLOG_FIGURE_STYLE)}>`;
+  });
+
+  return withFigureStyle.replace(/<img\b([^>]*)>/gi, (_match, attrs: string) => {
+    return `<img${mergeInlineStyle(attrs, INLINE_IMAGE_STYLE)}>`;
+  });
+}
+
+function mergeInlineStyle(attrs: string, requiredStyle: string): string {
+  const styleRegex = /\sstyle\s*=\s*(["'])([\s\S]*?)\1/i;
+  const styleMatch = attrs.match(styleRegex);
+  if (!styleMatch) {
+    return `${attrs} style="${requiredStyle}"`;
+  }
+
+  const quote = styleMatch[1];
+  const existingStyle = styleMatch[2].trim();
+  const needsSemicolon = existingStyle.length > 0 && !existingStyle.endsWith(';');
+  const merged = `${existingStyle}${needsSemicolon ? ';' : ''}${requiredStyle}`;
+  return attrs.replace(styleRegex, ` style=${quote}${merged}${quote}`);
 }

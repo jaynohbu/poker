@@ -9,6 +9,9 @@ export const blogImagePositions: BlogImagePosition[] = [
   'bottom-right',
 ];
 
+const INLINE_IMAGE_STYLE = 'max-width:min(15%,120px);width:min(15%,120px);height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
+const INLINE_FIGURE_STYLE = 'box-sizing:border-box;width:15%;max-width:15%;min-width:96px;margin:0 0 1rem 0;overflow:hidden;';
+
 export function insertBlogImage(
   body: string,
   bodyFormat: BlogBodyFormat,
@@ -28,8 +31,8 @@ function wrapLayout(content: string, position: BlogImagePosition): string {
 
 function buildFigure(imageUrl: string, position: BlogImagePosition): string {
   return `
-    <figure class="blog-image blog-image--${position}">
-      <img src="${escapeHtml(imageUrl)}" alt="blog image" />
+    <figure class="blog-image blog-image--${position}" style="${INLINE_FIGURE_STYLE}">
+      <img src="${escapeHtml(imageUrl)}" alt="blog image" style="${INLINE_IMAGE_STYLE}" />
     </figure>
   `.trim();
 }

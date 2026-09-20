@@ -76,8 +76,8 @@ h2 { margin: 0; font-size: clamp(2rem, 4.5vw, 3.5rem); line-height: 1.03; max-wi
 	min-height: 320px;
 }
 .panel-title { margin: 0; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; }
-.cards { display: flex; gap: 0.6rem; margin: 0; }
-.card { width: 70px; height: 96px; border-radius: 10px; border: 1px solid #0000002a; background: #fff; display: grid; place-content: center; font-weight: 700; }
+.cards { display: flex; gap: 0.6rem; margin: 0; flex-wrap: wrap; }
+.card { flex: 0 0 70px; width: 70px; min-width: 70px; height: 96px; min-height: 96px; border-radius: 10px; border: 1px solid #0000002a; background: #fff; display: grid; place-content: center; font-weight: 700; }
 .card span { color: #c43030; }
 .dealer { transform: rotate(7deg); }
 .move { margin: 0; font-weight: 700; }
