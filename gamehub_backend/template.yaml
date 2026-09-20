@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: GameHub backend SAM infrastructure and deployment stack.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+  CorsOrigins:
+    Type: String
+    Default: http://localhost:55123,http://localhost:4200
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 15
+    MemorySize: 512
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        DYNAMODB_INIT: 'false'
+        DYNAMODB_SEED: 'false'
+        CORS_ORIGINS: !Ref CorsOrigins
+
+Resources:
+  ApiGateway:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref EnvironmentName
+
+  ArticlesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub gh_articles_${EnvironmentName}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: slug
+          AttributeType: S
+      KeySchema:
+        - AttributeName: slug
+          KeyType: HASH
+
+  BackendFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: .
+      Handler: dist/lambda.handler
+      Environment:
+        Variables:
+          ARTICLES_TABLE_NAME: !Ref ArticlesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ArticlesTable
+      Events:
+        Root:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Method: ANY
+            Path: /
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Method: ANY
+            Path: /{proxy+}
+
+Outputs:
+  ApiEndpoint:
+    Description: Public URL of deployed backend API
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}
+  ArticlesTableName:
+    Description: DynamoDB table name for articles
+    Value: !Ref ArticlesTable

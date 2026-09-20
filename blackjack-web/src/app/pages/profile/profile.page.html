@@ -1,0 +1,28 @@
+<section class="profile-wrap">
+  <h1>Profile</h1>
+  <form>
+    <label>Email</label>
+    <input type="email" [formControl]="form.controls.email" />
+    <label>Nickname</label>
+    <input type="text" [formControl]="form.controls.nickname" />
+    <button type="button" (click)="saveNickname()">Save nickname</button>
+  </form>
+
+  <h2>Choose Avatar</h2>
+  <div class="avatars">
+    @for (key of avatarPresets; track key) {
+      <button type="button" (click)="setPreset(key)"><img [src]="avatarPresetMap[key]" [alt]="key" /></button>
+    }
+  </div>
+  <input type="file" accept="image/*" (change)="uploadAvatar($event)" />
+
+  <h2>Change Password</h2>
+  <form>
+    <input type="password" placeholder="Old password" [formControl]="form.controls.oldPassword" />
+    <input type="password" placeholder="New password" [formControl]="form.controls.newPassword" />
+    <button type="button" (click)="changePassword()">Update password</button>
+  </form>
+
+  <p>{{ message() }}</p>
+  <button type="button" (click)="logout()">Logout</button>
+</section>

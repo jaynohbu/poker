@@ -1,0 +1,26 @@
+<div class="page-bg" aria-hidden="true">
+	<div class="orb orb-one"></div>
+	<div class="orb orb-two"></div>
+	<div class="grain"></div>
+</div>
+
+@if (showNavigation()) {
+	<nav class="top-nav">
+		<a class="brand-link" routerLink="/">{{ t('brand') }}</a>
+		<div class="nav-links">
+			<a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ t('navHome') }}</a>
+			<a routerLink="/blog" routerLinkActive="active">{{ t('navBlog') }}</a>
+			<a routerLink="/story" routerLinkActive="active">{{ t('navStory') }}</a>
+			@if (authenticated()) {
+				<a routerLink="/profile" routerLinkActive="active">{{ t('navProfile') }}</a>
+			} @else {
+				<a routerLink="/auth/login" routerLinkActive="active">{{ t('login') }}</a>
+			}
+		</div>
+		<button type="button" class="logout-btn" (click)="logout()">{{ t('navLogout') }}</button>
+	</nav>
+}
+
+<div class="app-content">
+	<router-outlet />
+</div>

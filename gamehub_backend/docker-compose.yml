@@ -1,0 +1,25 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:2.5.3
+    container_name: gamehub_dynamodb
+    command: ['-jar', 'DynamoDBLocal.jar', '-sharedDb', '-inMemory']
+    ports:
+      - '8000:8000'
+
+  gamehub-backend:
+    build: .
+    container_name: gamehub_backend
+    depends_on:
+      - dynamodb
+    environment:
+      PORT: 3000
+      AWS_REGION: ap-northeast-2
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      CORS_ORIGINS: http://localhost:55123,http://localhost:4200
+      DYNAMODB_INIT: 'true'
+      DYNAMODB_SEED: 'true'
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      ARTICLES_TABLE_NAME: gh_articles
+    ports:
+      - '3000:3000'

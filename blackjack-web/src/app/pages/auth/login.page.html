@@ -1,0 +1,27 @@
+<section class="auth-wrap">
+  <div class="lang-row">
+    @for (opt of options; track opt.code) {
+      <button type="button" (click)="setLanguage(opt.code)">{{ opt.label }}</button>
+    }
+  </div>
+  <h1>{{ t('login') }}</h1>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <input type="email" formControlName="email" [placeholder]="t('email')" />
+    <p class="field-error">{{ errorFor('email') }}</p>
+    <input type="password" formControlName="password" [placeholder]="t('password')" />
+    <p class="field-error">{{ errorFor('password') }}</p>
+    <button class="primary" [disabled]="loading()">{{ t('loginBtn') }}</button>
+  </form>
+  <p class="error">{{ error() }}</p>
+  <div class="socials">
+    <button type="button" (click)="social('Google')">{{ t('google') }}</button>
+    <button type="button" (click)="social('Facebook')">{{ t('facebook') }}</button>
+    <button type="button" (click)="social('Apple')">{{ t('apple') }}</button>
+    <button type="button" (click)="social('Amazon')">{{ t('amazon') }}</button>
+  </div>
+  <nav>
+    <a routerLink="/">{{ t('backHome') }}</a>
+    <a routerLink="/auth/register">{{ t('createAccount') }}</a>
+    <a routerLink="/auth/forgot-password">{{ t('forgotLink') }}</a>
+  </nav>
+</section>

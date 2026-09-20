@@ -1,0 +1,18 @@
+<section class="auth-wrap">
+  <div class="lang-row">
+    @for (opt of options; track opt.code) {
+      <button type="button" (click)="setLanguage(opt.code)">{{ opt.label }}</button>
+    }
+  </div>
+  <h1>{{ t('confirm') }}</h1>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <input type="email" formControlName="email" [placeholder]="t('email')" />
+    <p class="field-error">{{ errorFor('email') }}</p>
+    <input type="text" formControlName="code" [placeholder]="t('code')" />
+    <p class="field-error">{{ errorFor('code') }}</p>
+    <button class="primary" [disabled]="loading()">{{ t('confirmBtn') }}</button>
+  </form>
+  <p class="error">{{ error() }}</p>
+  <button type="button" (click)="resend()">{{ t('resend') }}</button>
+  <nav><a routerLink="/auth/login">{{ t('backLogin') }}</a></nav>
+</section>

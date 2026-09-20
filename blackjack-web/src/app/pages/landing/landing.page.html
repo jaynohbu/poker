@@ -1,0 +1,158 @@
+<main class="layout">
+  <header class="topbar">
+    <p class="brand">{{ t('brand') }}</p>
+    <div class="controls">
+      <div class="langs">
+        @for (opt of options; track opt.code) {
+          <button [class.active]="isLanguage(opt.code)" (click)="setLanguage(opt.code)">{{ opt.label }}</button>
+        }
+      </div>
+      @if (canWrite()) {
+        <a class="status-pill" routerLink="/blog/write">{{ t('blogWriteLink') }}</a>
+      }
+      <a class="status-pill" routerLink="/auth/login">{{ t('login') }}</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <article class="intro">
+      <p class="eyebrow">{{ t('eyebrow') }}</p>
+      <h2>{{ t('heroTitle') }}</h2>
+      <p class="lead">{{ t('lead') }}</p>
+      <section class="site-intro">
+        <h3>{{ t('siteIntroTitle') }}</h3>
+        <p>{{ t('siteIntroBody') }}</p>
+      </section>
+
+      <div class="actions">
+        <button class="primary" (click)="start()">{{ t('ctaStart') }}</button>
+        <button>{{ t('ctaDemo') }}</button>
+      </div>
+
+      <div class="features">
+        <article>
+          <h3>{{ t('featureDecisionTitle') }}</h3>
+          <p>{{ t('featureDecisionDesc') }}</p>
+        </article>
+        <article>
+          <h3>{{ t('featureExplainableTitle') }}</h3>
+          <p>{{ t('featureExplainableDesc') }}</p>
+        </article>
+        <article>
+          <h3>{{ t('featureRiskTitle') }}</h3>
+          <p>{{ t('featureRiskDesc') }}</p>
+        </article>
+      </div>
+    </article>
+
+    <aside class="table-card">
+      <p class="panel-title">{{ t('handPreviewTitle') }}</p>
+      <div class="cards">
+        <div class="card">A <span>♠</span></div>
+        <div class="card">9 <span>♥</span></div>
+        <div class="card dealer">K <span>♦</span></div>
+      </div>
+      <p class="move">{{ t('suggestedMove') }}</p>
+      <ul>
+        <li>{{ t('moveReason1') }}</li>
+        <li>{{ t('moveReason2') }}</li>
+        <li>{{ t('moveReason3') }}</li>
+      </ul>
+    </aside>
+  </section>
+
+  <section class="game-loop">
+    <article>
+      <p class="step">01</p>
+      <h3>{{ t('gameLoopScanTitle') }}</h3>
+      <p>{{ t('gameLoopScanDesc') }}</p>
+    </article>
+    <article>
+      <p class="step">02</p>
+      <h3>{{ t('gameLoopScoreTitle') }}</h3>
+      <p>{{ t('gameLoopScoreDesc') }}</p>
+    </article>
+    <article>
+      <p class="step">03</p>
+      <h3>{{ t('gameLoopGuideTitle') }}</h3>
+      <p>{{ t('gameLoopGuideDesc') }}</p>
+    </article>
+  </section>
+
+  <section class="latest-posts">
+    <div class="section-head">
+      <h3>{{ t('latestPostsTitle') }}</h3>
+      <a routerLink="/blog">{{ t('latestPostsSeeAll') }}</a>
+    </div>
+
+    @if (blogLoading()) {
+      <article class="post-skeleton">{{ t('latestPostsLoading') }}</article>
+    }
+
+    @if (blogError()) {
+      <article class="post-skeleton error">{{ t('latestPostsError') }}</article>
+    }
+
+    @if (!blogLoading() && !blogError()) {
+      <div class="post-grid">
+        @for (post of latestPosts(); track post.slug) {
+          <article class="post-item">
+            <p class="post-meta">
+              <span class="author-pill">
+                @if (post.author.image) {
+                  <img class="author-avatar-img" [src]="post.author.image" [alt]="post.author.username" />
+                } @else {
+                  <span class="author-avatar">{{ post.author.username.charAt(0).toUpperCase() }}</span>
+                }
+                <strong>{{ post.author.username }}</strong>
+              </span>
+              <span>{{ post.createdAt | date:'mediumDate' }}</span>
+            </p>
+            <h4>
+              <a [routerLink]="['/blog/article', post.slug]">{{ post.title }}</a>
+            </h4>
+            <p>{{ post.description }}</p>
+            <ul class="post-tags">
+              @for (tag of post.tagList.slice(0, 3); track tag) {
+                <li><a [routerLink]="'/blog'" [queryParams]="{ tag: tag }">{{ tag }}</a></li>
+              }
+            </ul>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="chapter-links">
+    <a routerLink="/story">
+      <span>01</span>
+      <strong>{{ t('chapter01Title') }}</strong>
+      <p>{{ t('chapter01Desc') }}</p>
+    </a>
+    <a routerLink="/oop">
+      <span>02</span>
+      <strong>{{ t('chapter02Title') }}</strong>
+      <p>{{ t('chapter02Desc') }}</p>
+    </a>
+    <a routerLink="/sequence">
+      <span>03</span>
+      <strong>{{ t('chapter03Title') }}</strong>
+      <p>{{ t('chapter03Desc') }}</p>
+    </a>
+    <a routerLink="/pending-4">
+      <span>04</span>
+      <strong>{{ t('chapter04Title') }}</strong>
+      <p>{{ t('chapter04Desc') }}</p>
+    </a>
+    <a routerLink="/pending-5">
+      <span>05</span>
+      <strong>{{ t('chapter05Title') }}</strong>
+      <p>{{ t('chapter05Desc') }}</p>
+    </a>
+    <a routerLink="/blog">
+      <span>06</span>
+      <strong>{{ t('chapterBlogTitle') }}</strong>
+      <p>{{ t('chapterBlogDesc') }}</p>
+    </a>
+  </section>
+</main>

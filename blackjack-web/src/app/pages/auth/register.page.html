@@ -1,0 +1,24 @@
+<section class="auth-wrap">
+  <div class="lang-row">
+    @for (opt of options; track opt.code) {
+      <button type="button" (click)="setLanguage(opt.code)">{{ opt.label }}</button>
+    }
+  </div>
+  <h1>{{ t('register') }}</h1>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <input type="email" formControlName="email" [placeholder]="t('email')" />
+    <p class="field-error">{{ errorFor('email') }}</p>
+    <input type="text" formControlName="nickname" [placeholder]="t('nickname')" />
+    <p class="field-error">{{ errorFor('nickname') }}</p>
+    <input type="password" formControlName="password" [placeholder]="t('password')" />
+    <p class="field-error">{{ errorFor('password') }}</p>
+    <input type="password" formControlName="confirmPassword" [placeholder]="t('confirmPassword')" />
+    <p class="field-error">{{ errorFor('confirmPassword') }}</p>
+    <button class="primary" [disabled]="loading()">{{ t('registerBtn') }}</button>
+  </form>
+  <p class="error">{{ error() }}</p>
+  <nav>
+    <a routerLink="/">{{ t('backHome') }}</a>
+    <a routerLink="/auth/login">{{ t('backLogin') }}</a>
+  </nav>
+</section>

@@ -1,0 +1,123 @@
+:host {
+	display: block;
+	position: relative;
+	min-height: 100vh;
+}
+
+.page-bg {
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	background-image: url('/bg-bubbles.svg'), linear-gradient(135deg, #0f4d3f, #24916f);
+	background-repeat: no-repeat, no-repeat;
+	background-size: cover, cover;
+	background-position: left top, center;
+}
+
+.app-content {
+	position: relative;
+	z-index: 1;
+	padding: 1rem 0 2rem;
+}
+
+.top-nav {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem 1.5rem;
+	backdrop-filter: blur(14px);
+	background: linear-gradient(180deg, #0a2f26cc, #0a2f2688);
+	border-bottom: 1px solid #ffffff22;
+}
+
+.brand-link,
+.nav-links a,
+.logout-btn {
+	color: #f5fff9;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.brand-link {
+	font-size: 1.05rem;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+}
+
+.nav-links {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin-left: auto;
+}
+
+.nav-links a,
+.logout-btn {
+	padding: 0.45rem 0.75rem;
+	border-radius: 999px;
+	transition: background-color 0.2s ease;
+}
+
+.nav-links a.active,
+.nav-links a:hover,
+.logout-btn:hover {
+	background: #ffffff1a;
+}
+
+.logout-btn {
+	border: 1px solid #ffffff2e;
+	background: transparent;
+	cursor: pointer;
+	margin-left: 0.25rem;
+}
+
+@media (max-width: 720px) {
+	.top-nav {
+		flex-wrap: wrap;
+		padding: 1rem;
+	}
+
+	.nav-links {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	.logout-btn {
+		margin-left: auto;
+	}
+}
+
+.orb {
+	position: absolute;
+	border-radius: 50%;
+	filter: blur(2px);
+}
+
+.orb-one {
+	width: 300px;
+	height: 300px;
+	left: -70px;
+	bottom: -80px;
+	background: radial-gradient(circle, #f8b84c77, transparent);
+}
+
+.orb-two {
+	width: 340px;
+	height: 340px;
+	right: -90px;
+	top: -40px;
+	background: radial-gradient(circle, #ffffff44, transparent);
+}
+
+.grain {
+	position: absolute;
+	inset: 0;
+	opacity: 0.22;
+	background: radial-gradient(#00000022 1px, transparent 1px);
+	background-size: 3px 3px;
+}
