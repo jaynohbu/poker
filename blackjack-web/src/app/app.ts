@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { Hub } from 'aws-amplify/utils';
 import { translations } from './core/config/translations';
 import { LanguageStore } from './core/i18n/language.store';
 import { AuthUseCases } from './core/use-cases/auth.use-cases';
@@ -23,6 +24,11 @@ export class App {
 
   constructor() {
     void this.refreshAuth();
+    Hub.listen('auth', ({ payload }) => {
+      if (payload.event === 'signedIn' || payload.event === 'signedOut' || payload.event === 'tokenRefresh') {
+        void this.refreshAuth();
+      }
+    });
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),

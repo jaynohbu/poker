@@ -1,0 +1,47 @@
+# OS and editor
+.DS_Store
+.vscode/
+
+# Logs
+.logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# JavaScript/TypeScript build artifacts
+**/node_modules/
+**/.angular/
+**/dist/
+**/.cache/
+**/coverage/
+**/.next/
+**/.nuxt/
+**/out/
+
+# Python generated and virtual environments
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.ipynb_checkpoints/
+**/.venv/
+**/venv/
+
+# AWS/SAM generated files
+**/.aws-sam/
+
+# Local environment files
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Mobile/web build outputs
+**/.expo/
+**/.expo-shared/
+**/android/app/build/
+**/ios/build/

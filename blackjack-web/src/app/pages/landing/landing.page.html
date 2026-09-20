@@ -7,10 +7,18 @@
           <button [class.active]="isLanguage(opt.code)" (click)="setLanguage(opt.code)">{{ opt.label }}</button>
         }
       </div>
-      @if (canWrite()) {
-        <a class="status-pill" routerLink="/blog/write">{{ t('blogWriteLink') }}</a>
+      @if (authenticated()) {
+        @if (canWrite()) {
+          <a class="status-pill" routerLink="/blog/write">{{ t('blogWriteLink') }}</a>
+        }
+        <a class="status-pill" routerLink="/profile">{{ t('navProfile') }}</a>
+        <button class="status-pill logout" type="button" (click)="logout()">{{ t('navLogout') }}</button>
+      } @else {
+        @if (canWrite()) {
+          <a class="status-pill" routerLink="/blog/write">{{ t('blogWriteLink') }}</a>
+        }
+        <a class="status-pill" routerLink="/auth/login">{{ t('login') }}</a>
       }
-      <a class="status-pill" routerLink="/auth/login">{{ t('login') }}</a>
     </div>
   </header>
 
@@ -123,36 +131,13 @@
     }
   </section>
 
-  <section class="chapter-links">
-    <a routerLink="/story">
-      <span>01</span>
-      <strong>{{ t('chapter01Title') }}</strong>
-      <p>{{ t('chapter01Desc') }}</p>
-    </a>
-    <a routerLink="/oop">
-      <span>02</span>
-      <strong>{{ t('chapter02Title') }}</strong>
-      <p>{{ t('chapter02Desc') }}</p>
-    </a>
-    <a routerLink="/sequence">
-      <span>03</span>
-      <strong>{{ t('chapter03Title') }}</strong>
-      <p>{{ t('chapter03Desc') }}</p>
-    </a>
-    <a routerLink="/pending-4">
-      <span>04</span>
-      <strong>{{ t('chapter04Title') }}</strong>
-      <p>{{ t('chapter04Desc') }}</p>
-    </a>
-    <a routerLink="/pending-5">
-      <span>05</span>
-      <strong>{{ t('chapter05Title') }}</strong>
-      <p>{{ t('chapter05Desc') }}</p>
-    </a>
-    <a routerLink="/blog">
-      <span>06</span>
-      <strong>{{ t('chapterBlogTitle') }}</strong>
-      <p>{{ t('chapterBlogDesc') }}</p>
-    </a>
+  <section class="blog-cta">
+    <p>{{ t('blogIntro') }}</p>
+    <div class="actions">
+      <a class="status-pill" routerLink="/blog">{{ t('latestPostsSeeAll') }}</a>
+      @if (canWrite()) {
+        <a class="status-pill" routerLink="/blog/write">{{ t('blogWriteNew') }}</a>
+      }
+    </div>
   </section>
 </main>

@@ -2,18 +2,32 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  MaxFileSizeValidator,
   NotFoundException,
   Param,
+  Patch,
   Post,
+  UploadedFile,
   Query,
+  UseInterceptors,
+  ParseFilePipe,
 } from '@nestjs/common';
 import { CreateArticleUseCase } from './application/create-article.use-case';
 import { GetArticleUseCase } from './application/get-article.use-case';
 import { ArticleNotFoundError } from './application/article-not-found.error';
 import { ListArticlesUseCase } from './application/list-articles.use-case';
-import { Article, ArticleBodyFormat, CreateArticleInput } from './domain/article';
+import { UpdateArticleUseCase } from './application/update-article.use-case';
+import { DeleteArticleUseCase } from './application/delete-article.use-case';
+import { Article, ArticleBodyFormat, CreateArticleInput, UpdateArticleInput } from './domain/article';
 import { ArticlesFeed } from './domain/articles.repository';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { UploadArticleImageUseCase } from './application/upload-article-image.use-case';
+import type { ArticleImageUploadFile } from './domain/article-image-upload';
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 @Controller('articles')
 export class ArticlesController {
@@ -21,6 +35,9 @@ export class ArticlesController {
     private readonly listArticlesUseCase: ListArticlesUseCase,
     private readonly getArticleUseCase: GetArticleUseCase,
     private readonly createArticleUseCase: CreateArticleUseCase,
+    private readonly updateArticleUseCase: UpdateArticleUseCase,
+    private readonly deleteArticleUseCase: DeleteArticleUseCase,
+    private readonly uploadArticleImageUseCase: UploadArticleImageUseCase,
   ) {}
 
   @Get()
@@ -52,6 +69,46 @@ export class ArticlesController {
     const article = await this.createArticleUseCase.execute(input);
     return { article };
   }
+
+  @Patch(':slug')
+  async updateArticle(
+    @Param('slug') slug: string,
+    @Body() payload: { article?: Partial<CreateArticleInput> },
+  ): Promise<{ article: Article }> {
+    try {
+      const input = parseUpdateArticleInput(payload);
+      const article = await this.updateArticleUseCase.execute(slug, input);
+      return { article };
+    } catch (error) {
+      if (error instanceof ArticleNotFoundError) {
+        throw new NotFoundException({ errors: { body: [error.message] } });
+      }
+      throw error;
+    }
+  }
+
+  @Delete(':slug')
+  async deleteArticle(@Param('slug') slug: string): Promise<{ deleted: true }> {
+    try {
+      await this.deleteArticleUseCase.execute(slug);
+      return { deleted: true };
+    } catch (error) {
+      if (error instanceof ArticleNotFoundError) {
+        throw new NotFoundException({ errors: { body: [error.message] } });
+      }
+      throw error;
+    }
+  }
+
+  @Post('images')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_IMAGE_BYTES } }))
+  async uploadImage(
+    @Body('email') email: string,
+    @UploadedFile(new ParseFilePipe({ validators: [new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES })] }))
+    file: ArticleImageUploadFile,
+  ): Promise<{ key: string; url: string }> {
+    return this.uploadArticleImageUseCase.execute({ email, file });
+  }
 }
 
 function parsePositiveInt(value: string, fallback: number, max: number): number {
@@ -68,7 +125,28 @@ function parseCreateArticleInput(payload: { article?: Partial<CreateArticleInput
   const body = requireText(article.body, 'body');
   const bodyFormat = parseBodyFormat(article.bodyFormat);
   const tagList = parseTagList(article.tagList);
-  return { title, description, body, bodyFormat, tagList };
+  const author = parseAuthor(article.author);
+  return { title, description, body, bodyFormat, tagList, author };
+}
+
+function parseUpdateArticleInput(payload: { article?: Partial<CreateArticleInput> }): UpdateArticleInput {
+  const article = payload.article;
+  if (!article || typeof article !== 'object') {
+    throw new BadRequestException({ errors: { body: ['article payload is required'] } });
+  }
+
+  const input: UpdateArticleInput = {};
+  if (typeof article.title === 'string') input.title = requireText(article.title, 'title');
+  if (typeof article.description === 'string') input.description = requireText(article.description, 'description');
+  if (typeof article.body === 'string') input.body = requireText(article.body, 'body');
+  if (article.bodyFormat !== undefined) input.bodyFormat = parseBodyFormat(article.bodyFormat);
+  if (article.tagList !== undefined) input.tagList = parseTagList(article.tagList);
+
+  if (Object.keys(input).length === 0) {
+    throw new BadRequestException({ errors: { body: ['at least one field is required'] } });
+  }
+
+  return input;
 }
 
 function requireText(value: unknown, field: string): string {
@@ -86,4 +164,14 @@ function parseTagList(value: unknown): string[] {
 function parseBodyFormat(value: unknown): ArticleBodyFormat {
   if (value === 'html') return 'html';
   return 'text';
+}
+
+function parseAuthor(value: unknown): { username: string; image: string } | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.username !== 'string') return undefined;
+  const username = record.username.trim();
+  if (!username) return undefined;
+  const image = typeof record.image === 'string' ? record.image.trim() : '';
+  return { username, image };
 }

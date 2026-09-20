@@ -46,10 +46,6 @@ export class LoginPage {
     this.loading.set(false);
   }
 
-  protected social(provider: 'Google' | 'Facebook' | 'Apple' | 'Amazon'): void {
-    this.auth.socialLogin(provider).catch((e) => this.error.set(authApiError(this.language(), e)));
-  }
-
   protected language(): Language {
     return this.languages.current();
   }

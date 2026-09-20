@@ -10,7 +10,7 @@ import { RealworldApiService, RealworldArticle } from '../../infra/realworld/rea
   template: `
     <main class="shell">
       <header class="header">
-        <a class="back" routerLink="/">← Back to BlackjackWeb</a>
+        <a class="back" routerLink="/">← Back to RLDojo</a>
         <h1>Community Feed (RealWorld Read-only)</h1>
         <p>blackjack-web 기반을 유지하면서, 외부 RealWorld 공개 피드를 읽기 전용으로 연결한 1차 통합 페이지입니다.</p>
       </header>

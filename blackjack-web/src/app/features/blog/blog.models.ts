@@ -31,4 +31,12 @@ export type CreateBlogArticleInput = {
   body: string;
   bodyFormat: BlogBodyFormat;
   tagList: string[];
+  author?: BlogAuthor;
+};
+
+export type UpdateBlogArticleInput = Partial<CreateBlogArticleInput>;
+
+export type BlogImageUploadResponse = {
+  key: string;
+  url: string;
 };

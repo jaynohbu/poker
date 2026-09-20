@@ -8,19 +8,33 @@ import { ArticlesDynamoDbRepository } from './infra/dynamodb/articles-dynamodb.r
 import { ArticlesSeedInitializer } from './infra/dynamodb/articles-seed.initializer';
 import { DynamoDbTableInitializer } from './infra/dynamodb/dynamodb-table.initializer';
 import { dynamodbProviders } from './infra/dynamodb/dynamodb.providers';
+import { UpdateArticleUseCase } from './application/update-article.use-case';
+import { DeleteArticleUseCase } from './application/delete-article.use-case';
+import { UploadArticleImageUseCase } from './application/upload-article-image.use-case';
+import { ArticleImageS3Storage } from './infra/s3/article-image-s3.storage';
+import { ARTICLE_IMAGE_STORAGE } from './domain/article-image-upload';
+import { articleImageProviders } from './infra/s3/article-image.tokens';
 
 @Module({
   controllers: [ArticlesController],
   providers: [
     ...dynamodbProviders,
+    ...articleImageProviders,
     DynamoDbTableInitializer,
     ArticlesSeedInitializer,
     ListArticlesUseCase,
     GetArticleUseCase,
     CreateArticleUseCase,
+    UpdateArticleUseCase,
+    DeleteArticleUseCase,
+    UploadArticleImageUseCase,
     {
       provide: ARTICLES_REPOSITORY,
       useClass: ArticlesDynamoDbRepository,
+    },
+    {
+      provide: ARTICLE_IMAGE_STORAGE,
+      useClass: ArticleImageS3Storage,
     },
   ],
 })

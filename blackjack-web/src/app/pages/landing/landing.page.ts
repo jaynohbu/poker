@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { Language } from '../../core/models/language.model';
 import { translations } from '../../core/config/translations';
 import { LanguageStore } from '../../core/i18n/language.store';
+import { AuthUseCases } from '../../core/use-cases/auth.use-cases';
 import { BlogApiService } from '../../features/blog/blog-api.service';
 import { BlogArticle } from '../../features/blog/blog.models';
 import { RoleAccessUseCase } from '../../core/use-cases/role-access.use-case';
@@ -18,11 +19,13 @@ import { RoleAccessUseCase } from '../../core/use-cases/role-access.use-case';
 })
 export class LandingPage implements OnInit {
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthUseCases);
   private readonly languages = inject(LanguageStore);
   private readonly blogApi = inject(BlogApiService);
   private readonly roleAccess = inject(RoleAccessUseCase);
   protected readonly language = this.languages.current;
   protected readonly canWrite = this.roleAccess.canWrite;
+  protected readonly authenticated = signal(false);
   protected readonly blogLoading = signal(true);
   protected readonly blogError = signal(false);
   protected readonly latestPosts = signal<BlogArticle[]>([]);
@@ -32,7 +35,7 @@ export class LandingPage implements OnInit {
   ];
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadLatestPosts(), this.roleAccess.refresh()]);
+    await Promise.all([this.loadLatestPosts(), this.roleAccess.refresh(), this.refreshAuth()]);
   }
 
   protected t(key: keyof (typeof translations)['en']): string {
@@ -51,6 +54,15 @@ export class LandingPage implements OnInit {
     this.router.navigateByUrl('/auth/login');
   }
 
+  protected async logout(): Promise<void> {
+    try {
+      await this.auth.logout();
+    } finally {
+      this.authenticated.set(false);
+      await this.router.navigateByUrl('/auth/login');
+    }
+  }
+
   private async loadLatestPosts(): Promise<void> {
     try {
       const response = await firstValueFrom(this.blogApi.getLatestArticles(3, 0));
@@ -59,6 +71,14 @@ export class LandingPage implements OnInit {
       this.blogError.set(true);
     } finally {
       this.blogLoading.set(false);
+    }
+  }
+
+  private async refreshAuth(): Promise<void> {
+    try {
+      this.authenticated.set(await this.auth.isAuthenticated());
+    } catch {
+      this.authenticated.set(false);
     }
   }
 }

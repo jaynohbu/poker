@@ -7,6 +7,8 @@ describe('ListArticlesUseCase', () => {
       findArticles: jest.fn().mockResolvedValue({ articles: [], articlesCount: 0 }),
       findArticleBySlug: jest.fn(),
       saveArticle: jest.fn(),
+      updateArticle: jest.fn(),
+      deleteArticle: jest.fn(),
     };
     const useCase = new ListArticlesUseCase(repository);
 

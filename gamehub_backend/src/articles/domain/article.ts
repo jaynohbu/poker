@@ -22,4 +22,7 @@ export type CreateArticleInput = {
   body: string;
   bodyFormat: ArticleBodyFormat;
   tagList: string[];
+  author?: ArticleAuthor;
 };
+
+export type UpdateArticleInput = Partial<CreateArticleInput>;

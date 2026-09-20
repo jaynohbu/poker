@@ -446,3 +446,11 @@ For issues, questions, or suggestions:
 
 **Happy poker coding! 🎰**
 # poker
+
+
+AWS_PAGER="" aws cognito-idp update-identity-provider \
+  --region us-west-2 \
+  --user-pool-id us-west-2_DySPN8sLZ \
+  --provider-name Google \
+  --provider-details client_id="REAL_GOOGLE_CLIENT_ID",client_secret="REAL_GOOGLE_CLIENT_SECRET",authorize_scopes="openid email profile" \
+  --attribute-mapping email=email,given_name=given_name,family_name=family_name,username=sub

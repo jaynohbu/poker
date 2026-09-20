@@ -13,12 +13,6 @@
     <button class="primary" [disabled]="loading()">{{ t('loginBtn') }}</button>
   </form>
   <p class="error">{{ error() }}</p>
-  <div class="socials">
-    <button type="button" (click)="social('Google')">{{ t('google') }}</button>
-    <button type="button" (click)="social('Facebook')">{{ t('facebook') }}</button>
-    <button type="button" (click)="social('Apple')">{{ t('apple') }}</button>
-    <button type="button" (click)="social('Amazon')">{{ t('amazon') }}</button>
-  </div>
   <nav>
     <a routerLink="/">{{ t('backHome') }}</a>
     <a routerLink="/auth/register">{{ t('createAccount') }}</a>

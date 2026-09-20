@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { ensureAmplifyConfigured } from '../../infra/cognito/amplify.init';
 import { UserRole } from '../models/user-role.model';
 
@@ -17,34 +17,44 @@ export class RoleAccessUseCase {
 
   async refresh(): Promise<void> {
     try {
-      const [attrs, session] = await Promise.all([fetchUserAttributes(), fetchAuthSession()]);
-      const role = this.parseRole(attrs['custom:role'], session.tokens?.idToken?.payload['cognito:groups']);
+      const session = await fetchAuthSession();
+      const idGroups = session.tokens?.idToken?.payload['cognito:groups'];
+      const accessGroups = session.tokens?.accessToken?.payload['cognito:groups'];
+      const role = this.parseRoleFromGroups(idGroups, accessGroups);
       this.role.set(role);
     } catch {
       this.role.set('viewer');
     }
   }
 
-  private parseRole(customRole: unknown, groups: unknown): UserRole {
-    const normalizedRole = this.normalizeRole(customRole);
-    if (normalizedRole) return normalizedRole;
-    const firstGroupRole = this.firstGroupRole(groups);
-    return firstGroupRole ?? 'viewer';
+  private parseRoleFromGroups(...groupSources: unknown[]): UserRole {
+    for (const source of groupSources) {
+      const resolved = this.firstGroupRole(source);
+      if (resolved) return resolved;
+    }
+    return 'viewer';
   }
 
   private firstGroupRole(groups: unknown): UserRole | null {
-    if (!Array.isArray(groups)) return null;
-    for (const item of groups) {
-      const role = this.normalizeRole(item);
+    const list = this.toGroupList(groups);
+    for (const item of list) {
+      const role = this.groupToRole(item);
       if (role) return role;
     }
     return null;
   }
 
-  private normalizeRole(value: unknown): UserRole | null {
-    if (typeof value !== 'string') return null;
+  private toGroupList(groups: unknown): string[] {
+    if (Array.isArray(groups)) return groups.filter((x): x is string => typeof x === 'string');
+    if (typeof groups !== 'string') return [];
+    return groups.split(',').map((x) => x.trim()).filter(Boolean);
+  }
+
+  private groupToRole(value: string): UserRole | null {
     const lower = value.trim().toLowerCase();
-    if (lower === 'admin' || lower === 'writer' || lower === 'viewer') return lower;
+    if (/(^|[-_:])admin(s)?($|[-_:])/.test(lower) || lower === 'admin') return 'admin';
+    if (/(^|[-_:])writer(s)?($|[-_:])/.test(lower) || lower === 'writer') return 'writer';
+    if (/(^|[-_:])viewer(s)?($|[-_:])/.test(lower) || lower === 'viewer') return 'viewer';
     return null;
   }
 }

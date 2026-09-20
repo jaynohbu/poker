@@ -63,6 +63,11 @@
 	transition: background-color 0.2s ease;
 }
 
+.login-btn {
+	border: 1px solid #ffffff33;
+	background: #ffffff10;
+}
+
 .nav-links a.active,
 .nav-links a:hover,
 .logout-btn:hover {
@@ -70,10 +75,15 @@
 }
 
 .logout-btn {
-	border: 1px solid #ffffff2e;
-	background: transparent;
+	border: 1px solid #ffccbc66;
+	background: #ff70431a;
+	color: #ffece6;
 	cursor: pointer;
 	margin-left: 0.25rem;
+}
+
+.logout-btn:hover {
+	background: #ff704333;
 }
 
 @media (max-width: 720px) {

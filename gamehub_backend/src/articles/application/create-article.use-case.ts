@@ -14,6 +14,7 @@ export class CreateArticleUseCase {
   execute(input: CreateArticleInput): Promise<Article> {
     const now = new Date().toISOString();
     const title = input.title.trim();
+    const author = normalizeAuthor(input.author);
     const article: Article = {
       slug: buildSlug(title),
       title,
@@ -22,10 +23,7 @@ export class CreateArticleUseCase {
       bodyFormat: input.bodyFormat,
       tagList: sanitizeTags(input.tagList),
       createdAt: now,
-      author: {
-        username: 'blackjack-writer',
-        image: '',
-      },
+      author,
     };
     return this.repository.saveArticle(article);
   }
@@ -43,4 +41,13 @@ function buildSlug(title: string): string {
 
 function sanitizeTags(tags: string[]): string[] {
   return tags.map((tag) => tag.trim()).filter(Boolean);
+}
+
+function normalizeAuthor(author?: { username: string; image: string }): { username: string; image: string } {
+  const username = author?.username?.trim();
+  const image = author?.image?.trim() ?? '';
+  if (!username) {
+    return { username: 'anonymous-writer', image: '' };
+  }
+  return { username, image };
 }

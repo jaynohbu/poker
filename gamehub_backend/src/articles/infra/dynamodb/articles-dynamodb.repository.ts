@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { GetCommand, PutCommand, ScanCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import { Article } from '../../domain/article';
+import { DeleteCommand, GetCommand, PutCommand, ScanCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { Article, UpdateArticleInput } from '../../domain/article';
 import { ArticlesFeed, ArticlesRepository } from '../../domain/articles.repository';
 import { ARTICLES_TABLE_NAME, DYNAMODB_DOCUMENT_CLIENT } from './dynamodb.tokens';
 import { mapItemToArticle, mapItemsToArticles, sortByCreatedAtDesc } from './article.mapper';
@@ -48,5 +48,32 @@ export class ArticlesDynamoDbRepository implements ArticlesRepository {
     });
     await this.client.send(command);
     return article;
+  }
+
+  async updateArticle(slug: string, input: UpdateArticleInput): Promise<Article | null> {
+    const existing = await this.findArticleBySlug(slug);
+    if (!existing) return null;
+
+    const updated: Article = {
+      ...existing,
+      ...input,
+      bodyFormat: input.bodyFormat ?? existing.bodyFormat,
+      tagList: input.tagList ?? existing.tagList,
+    };
+
+    await this.saveArticle(updated);
+    return updated;
+  }
+
+  async deleteArticle(slug: string): Promise<boolean> {
+    const existing = await this.findArticleBySlug(slug);
+    if (!existing) return false;
+
+    const command = new DeleteCommand({
+      TableName: this.tableName,
+      Key: { slug },
+    });
+    await this.client.send(command);
+    return true;
   }
 }

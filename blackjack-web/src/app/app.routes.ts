@@ -22,6 +22,11 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/blog/blog-write.page').then((m) => m.BlogWritePage)
 	},
 	{
+		path: 'blog/edit/:slug',
+		canActivate: [authGuard, blogWriterGuard],
+		loadComponent: () => import('./features/blog/blog-edit.page').then((m) => m.BlogEditPage)
+	},
+	{
 		path: 'community',
 		redirectTo: 'blog',
 		pathMatch: 'full'

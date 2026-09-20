@@ -17,6 +17,8 @@ describe('GetArticleUseCase', () => {
         author: { username: 'u', image: '' },
       }),
       saveArticle: jest.fn(),
+      updateArticle: jest.fn(),
+      deleteArticle: jest.fn(),
     };
     const useCase = new GetArticleUseCase(repository);
 
@@ -31,6 +33,8 @@ describe('GetArticleUseCase', () => {
       findArticles: jest.fn(),
       findArticleBySlug: jest.fn(),
       saveArticle: jest.fn(),
+      updateArticle: jest.fn(),
+      deleteArticle: jest.fn(),
     };
     const useCase = new GetArticleUseCase(repository);
 
@@ -42,6 +46,8 @@ describe('GetArticleUseCase', () => {
       findArticles: jest.fn(),
       findArticleBySlug: jest.fn().mockResolvedValue(null),
       saveArticle: jest.fn(),
+      updateArticle: jest.fn(),
+      deleteArticle: jest.fn(),
     };
     const useCase = new GetArticleUseCase(repository);
 
