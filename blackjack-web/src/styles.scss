@@ -16,3 +16,61 @@ body {
 .lang-ko {
 	--app-font: 'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
 }
+
+app-blog-article-page .html-body {
+	max-width: 100%;
+	overflow-x: hidden;
+}
+
+app-blog-article-page .html-body .blog-layout {
+	display: flow-root;
+	max-width: 100%;
+}
+
+app-blog-article-page .html-body .blog-content {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+app-blog-article-page .html-body .blog-image {
+	box-sizing: border-box;
+	width: 22%;
+	max-width: 180px;
+	min-width: 120px;
+	margin: 0 0 1rem;
+	overflow: hidden;
+}
+
+app-blog-article-page .html-body .blog-layout--top-left .blog-image,
+app-blog-article-page .html-body .blog-layout--bottom-left .blog-image {
+	float: left;
+	margin-right: 1rem;
+}
+
+app-blog-article-page .html-body .blog-layout--top-right .blog-image,
+app-blog-article-page .html-body .blog-layout--bottom-right .blog-image {
+	float: right;
+	margin-left: 1rem;
+}
+
+app-blog-article-page .html-body .blog-image img {
+	display: block;
+	width: 100%;
+	max-width: 180px;
+	height: auto;
+	object-fit: contain;
+	border-radius: 14px;
+	cursor: zoom-in;
+}
+
+@media (max-width: 768px) {
+	app-blog-article-page .html-body .blog-image {
+		width: 36%;
+		max-width: 140px;
+		min-width: 96px;
+	}
+
+	app-blog-article-page .html-body .blog-image img {
+		max-width: 140px;
+	}
+}

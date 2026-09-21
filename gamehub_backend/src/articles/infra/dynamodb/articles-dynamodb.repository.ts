@@ -36,6 +36,7 @@ export class ArticlesDynamoDbRepository implements ArticlesRepository {
       TableName: this.tableName,
       Item: {
         slug: article.slug,
+        language: article.language,
         title: article.title,
         description: article.description,
         body: article.body,
@@ -44,6 +45,7 @@ export class ArticlesDynamoDbRepository implements ArticlesRepository {
         createdAt: article.createdAt,
         authorUsername: article.author.username,
         authorImage: article.author.image,
+        content: article.content,
       },
     });
     await this.client.send(command);
@@ -57,8 +59,13 @@ export class ArticlesDynamoDbRepository implements ArticlesRepository {
     const updated: Article = {
       ...existing,
       ...input,
+      language: input.language ?? existing.language,
+      title: input.title ?? existing.title,
+      description: input.description ?? existing.description,
+      body: input.body ?? existing.body,
       bodyFormat: input.bodyFormat ?? existing.bodyFormat,
       tagList: input.tagList ?? existing.tagList,
+      content: existing.content,
     };
 
     await this.saveArticle(updated);

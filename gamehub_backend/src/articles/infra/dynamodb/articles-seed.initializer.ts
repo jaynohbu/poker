@@ -34,6 +34,7 @@ export class ArticlesSeedInitializer implements OnModuleInit {
         TableName: this.tableName,
         Item: {
           slug: article.slug,
+          language: article.language,
           title: article.title,
           description: article.description,
           body: article.body,
@@ -42,6 +43,7 @@ export class ArticlesSeedInitializer implements OnModuleInit {
           createdAt: article.createdAt,
           authorUsername: article.author.username,
           authorImage: article.author.image,
+          content: article.content,
         },
       });
       await this.client.send(command);

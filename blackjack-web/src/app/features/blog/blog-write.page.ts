@@ -204,7 +204,7 @@ export class BlogWritePage {
           bodyFormat: value.bodyFormat,
           tagList,
           author,
-        }),
+        }, this.language()),
       );
       await this.router.navigate(['/blog/article', response.article.slug]);
     } catch (error) {

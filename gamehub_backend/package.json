@@ -18,6 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "articles:backfill-localizations": "./scripts/backfill-article-localizations.sh",
     "sam:setup": "./scripts/sam-setup.sh",
     "sam:deploy": "./scripts/sam-deploy.sh",
     "lambda:deploy-code": "./scripts/lambda-deploy-code.sh"
@@ -25,6 +26,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.888.0",
     "@aws-sdk/client-s3": "^3.1136.0",
+    "@aws-sdk/client-translate": "^3.1136.0",
     "@aws-sdk/lib-dynamodb": "^3.888.0",
     "@codegenie/serverless-express": "^4.17.0",
     "@nestjs/common": "^11.0.1",

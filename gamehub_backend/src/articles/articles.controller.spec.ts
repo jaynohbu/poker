@@ -25,15 +25,16 @@ describe('ArticlesController', () => {
     const listArticlesUseCase = { execute: jest.fn().mockResolvedValue({ articles: [], articlesCount: 0 }) };
     const controller = buildController({ listArticlesUseCase });
 
-    const result = await controller.getArticles('-1', 'abc');
+    const result = await controller.getArticles('-1', 'abc', 'ko');
 
     expect(result).toEqual({ articles: [], articlesCount: 0 });
-    expect(listArticlesUseCase.execute).toHaveBeenCalledWith(0, 0);
+    expect(listArticlesUseCase.execute).toHaveBeenCalledWith(0, 0, 'ko');
   });
 
   it('returns one article', async () => {
     const article = {
       slug: 'a',
+      language: 'ko',
       title: 't',
       description: 'd',
       body: 'b',
@@ -41,10 +42,13 @@ describe('ArticlesController', () => {
       tagList: [],
       createdAt: '2026-01-01',
       author: { username: 'u', image: '' },
+      content: {
+        ko: { language: 'ko', title: 't', description: 'd', body: 'b', bodyFormat: 'text' },
+      },
     };
     const controller = buildController({ getArticleUseCase: { execute: jest.fn().mockResolvedValue(article) } });
 
-    const result = await controller.getArticle('a');
+    const result = await controller.getArticle('a', 'ko');
 
     expect(result).toEqual({ article });
   });
@@ -60,6 +64,7 @@ describe('ArticlesController', () => {
   it('creates article from payload', async () => {
     const article = {
       slug: 'new-one',
+      language: 'ko',
       title: 'New One',
       description: 'summary',
       body: 'content',
@@ -67,12 +72,16 @@ describe('ArticlesController', () => {
       tagList: ['news'],
       createdAt: '2026-09-19T00:00:00.000Z',
       author: { username: 'jane', image: 'https://img/jane.png' },
+      content: {
+        ko: { language: 'ko', title: 'New One', description: 'summary', body: 'content', bodyFormat: 'html' },
+      },
     };
     const createArticleUseCase = { execute: jest.fn().mockResolvedValue(article) };
     const controller = buildController({ createArticleUseCase });
 
     const result = await controller.createArticle({
       article: {
+        language: 'ko',
         title: 'New One',
         description: 'summary',
         body: 'content',
@@ -84,6 +93,7 @@ describe('ArticlesController', () => {
 
     expect(result).toEqual({ article });
     expect(createArticleUseCase.execute).toHaveBeenCalledWith({
+      language: 'ko',
       title: 'New One',
       description: 'summary',
       body: 'content',
@@ -96,6 +106,7 @@ describe('ArticlesController', () => {
   it('defaults missing bodyFormat to text', async () => {
     const article = {
       slug: 'new-two',
+      language: 'ko',
       title: 'New Two',
       description: 'summary',
       body: 'content',
@@ -103,12 +114,16 @@ describe('ArticlesController', () => {
       tagList: [],
       createdAt: '2026-09-19T00:00:00.000Z',
       author: { username: 'blackjack-writer', image: '' },
+      content: {
+        ko: { language: 'ko', title: 'New Two', description: 'summary', body: 'content', bodyFormat: 'text' },
+      },
     };
     const createArticleUseCase = { execute: jest.fn().mockResolvedValue(article) };
     const controller = buildController({ createArticleUseCase });
 
     await controller.createArticle({
       article: {
+        language: 'ko',
         title: 'New Two',
         description: 'summary',
         body: 'content',
@@ -116,6 +131,7 @@ describe('ArticlesController', () => {
     });
 
     expect(createArticleUseCase.execute).toHaveBeenCalledWith({
+      language: 'ko',
       title: 'New Two',
       description: 'summary',
       body: 'content',
@@ -128,6 +144,7 @@ describe('ArticlesController', () => {
   it('updates article from payload', async () => {
     const article = {
       slug: 'hello-world',
+      language: 'ko',
       title: 'Hello World',
       description: 'updated',
       body: 'updated body',
@@ -135,12 +152,16 @@ describe('ArticlesController', () => {
       tagList: ['updated'],
       createdAt: '2026-09-19T00:00:00.000Z',
       author: { username: 'blackjack-writer', image: '' },
+      content: {
+        ko: { language: 'ko', title: 'Hello World', description: 'updated', body: 'updated body', bodyFormat: 'html' },
+      },
     };
     const updateArticleUseCase = { execute: jest.fn().mockResolvedValue(article) };
     const controller = buildController({ updateArticleUseCase });
 
     const result = await controller.updateArticle('hello-world', {
       article: {
+        language: 'ko',
         description: 'updated',
         body: 'updated body',
         bodyFormat: 'html',
@@ -150,6 +171,7 @@ describe('ArticlesController', () => {
 
     expect(result).toEqual({ article });
     expect(updateArticleUseCase.execute).toHaveBeenCalledWith('hello-world', {
+      language: 'ko',
       description: 'updated',
       body: 'updated body',
       bodyFormat: 'html',
@@ -162,7 +184,7 @@ describe('ArticlesController', () => {
       updateArticleUseCase: { execute: jest.fn().mockRejectedValue(new ArticleNotFoundError('x')) },
     });
 
-    await expect(controller.updateArticle('x', { article: { title: 'ok' } })).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.updateArticle('x', { article: { language: 'ko', title: 'ok' } })).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('deletes article', async () => {

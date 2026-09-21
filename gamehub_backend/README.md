@@ -140,6 +140,21 @@ Optional overrides:
 - `STACK_NAME` (default: `gamehub-service`)
 - `FUNCTION_NAME` (if you want to bypass stack lookup)
 
+### Backfill Existing Article Localizations
+
+To pre-generate missing `en` / `ja` article content for all stored posts:
+
+```bash
+npm run articles:backfill-localizations
+```
+
+Optional environment overrides:
+
+- `AWS_REGION`
+- `ARTICLES_TABLE_NAME`
+- `API_BASE_URL`
+- `LANGUAGES` (default: `en ja`)
+
 What `lambda:deploy-code` does:
 
 1. Builds NestJS (`npm run build`)
@@ -152,3 +167,7 @@ What `lambda:deploy-code` does:
 - `EnvironmentName` (SAM parameter, default `dev`)
 - `CorsOrigins` (SAM parameter)
 - `ARTICLES_TABLE_NAME` (wired to provisioned DynamoDB table)
+- `BlogImagesBucket`
+- `BlogImagesRegion`
+- `BlogImagesPublicBaseUrl`
+- `BlogTranslateRegion`

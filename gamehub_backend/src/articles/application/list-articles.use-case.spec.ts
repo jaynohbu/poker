@@ -10,9 +10,10 @@ describe('ListArticlesUseCase', () => {
       updateArticle: jest.fn(),
       deleteArticle: jest.fn(),
     };
-    const useCase = new ListArticlesUseCase(repository);
+    const translator = { translateContent: jest.fn() };
+    const useCase = new ListArticlesUseCase(repository, translator as never);
 
-    const result = await useCase.execute(15, 3);
+    const result = await useCase.execute(15, 3, 'ko');
 
     expect(result).toEqual({ articles: [], articlesCount: 0 });
     expect(repository.findArticles).toHaveBeenCalledWith(15, 3);

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { translations } from '../../core/config/translations';
@@ -20,8 +20,6 @@ import { BlogArticle } from './blog.models';
             <a class="write-link" routerLink="/blog/write">{{ t('blogWriteLink') }}</a>
           }
         </div>
-        <h1>{{ t('blogTitle') }}</h1>
-        <p>{{ t('blogIntro') }}</p>
         @if (canWrite()) {
           <a class="write-button" routerLink="/blog/write">{{ t('blogWriteEntryCta') }}</a>
         }
@@ -110,6 +108,9 @@ export class BlogHomePage implements OnInit {
   protected readonly error = signal('');
   protected readonly articles = signal<BlogArticle[]>([]);
   protected readonly selectedTag = signal('');
+  private readonly reloadOnLanguage = effect(() => {
+    void this.loadArticles(this.selectedTag(), this.language());
+  });
 
   protected t(key: keyof (typeof translations)['en']): string {
     return translations[this.language()][key];
@@ -118,18 +119,16 @@ export class BlogHomePage implements OnInit {
   ngOnInit(): void {
     void this.roleAccess.refresh();
     this.route.queryParamMap.subscribe((params) => {
-      const tag = params.get('tag')?.trim() ?? '';
-      this.selectedTag.set(tag);
-      void this.loadArticles(tag);
+      this.selectedTag.set(params.get('tag')?.trim() ?? '');
     });
   }
 
-  private async loadArticles(tag: string): Promise<void> {
+  private async loadArticles(tag: string, language: 'en' | 'ko' | 'ja'): Promise<void> {
     this.loading.set(true);
     this.error.set('');
 
     try {
-      const response = await firstValueFrom(this.api.getLatestArticles(30, 0, tag || undefined));
+      const response = await firstValueFrom(this.api.getLatestArticles(30, 0, tag || undefined, language));
       const filtered = tag
         ? response.articles.filter((article) => article.tagList.includes(tag))
         : response.articles;

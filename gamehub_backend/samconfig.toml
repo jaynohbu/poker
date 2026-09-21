@@ -8,7 +8,7 @@ s3_prefix = "gamehub-service"
 region = "us-west-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "EnvironmentName=\"prod\" CorsOrigins=\"https://rldojo.net,https://www.rldojo.net,https://d1fqi0i49yjph9.cloudfront.net\""
+parameter_overrides = "EnvironmentName=\"prod\" CorsOrigins=\"https://rldojo.net,https://www.rldojo.net,https://d1fqi0i49yjph9.cloudfront.net\" BlogImagesBucket=\"blackjack-web-086723604095-prod\" BlogImagesRegion=\"eu-west-2\" BlogImagesPublicBaseUrl=\"https://d1fqi0i49yjph9.cloudfront.net\" BlogTranslateRegion=\"us-west-2\""
 image_repositories = []
 
 [default.global.parameters]

@@ -9,11 +9,23 @@ Parameters:
   CorsOrigins:
     Type: String
     Default: http://localhost:55123,http://localhost:4200
+  BlogImagesBucket:
+    Type: String
+    Default: gh_blog_images
+  BlogImagesRegion:
+    Type: String
+    Default: ap-northeast-2
+  BlogImagesPublicBaseUrl:
+    Type: String
+    Default: ''
+  BlogTranslateRegion:
+    Type: String
+    Default: us-west-2
 
 Globals:
   Function:
     Runtime: nodejs20.x
-    Timeout: 15
+    Timeout: 30
     MemorySize: 512
     Architectures:
       - x86_64
@@ -21,7 +33,12 @@ Globals:
       Variables:
         DYNAMODB_INIT: 'false'
         DYNAMODB_SEED: 'false'
+        DYNAMODB_MIGRATE_ARTICLE_CONTENT: 'false'
         CORS_ORIGINS: !Ref CorsOrigins
+        BLOG_IMAGES_BUCKET: !Ref BlogImagesBucket
+        BLOG_IMAGES_REGION: !Ref BlogImagesRegion
+        BLOG_IMAGES_PUBLIC_BASE_URL: !Ref BlogImagesPublicBaseUrl
+        BLOG_TRANSLATE_REGION: !Ref BlogTranslateRegion
 
 Resources:
   ApiGateway:
@@ -54,6 +71,11 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ArticlesTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - translate:TranslateText
+              Resource: '*'
       Events:
         Root:
           Type: HttpApi

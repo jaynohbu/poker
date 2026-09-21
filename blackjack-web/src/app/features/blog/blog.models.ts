@@ -5,6 +5,8 @@ export type BlogAuthor = {
 
 export type BlogBodyFormat = 'text' | 'html';
 
+export type BlogUpdateScope = 'current-language' | 'all-languages';
+
 export type BlogArticle = {
   slug: string;
   title: string;
@@ -35,6 +37,10 @@ export type CreateBlogArticleInput = {
 };
 
 export type UpdateBlogArticleInput = Partial<CreateBlogArticleInput>;
+
+export type UpdateBlogArticlePayload = UpdateBlogArticleInput & {
+  updateScope?: BlogUpdateScope;
+};
 
 export type BlogImageUploadResponse = {
   key: string;

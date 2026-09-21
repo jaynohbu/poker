@@ -20,7 +20,7 @@ import { ArticleNotFoundError } from './application/article-not-found.error';
 import { ListArticlesUseCase } from './application/list-articles.use-case';
 import { UpdateArticleUseCase } from './application/update-article.use-case';
 import { DeleteArticleUseCase } from './application/delete-article.use-case';
-import { Article, ArticleBodyFormat, CreateArticleInput, UpdateArticleInput } from './domain/article';
+import { Article, ArticleBodyFormat, ArticleLanguage, ArticleUpdateScope, CreateArticleInput, UpdateArticleInput } from './domain/article';
 import { ArticlesFeed } from './domain/articles.repository';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -44,16 +44,17 @@ export class ArticlesController {
   getArticles(
     @Query('limit') limit = '10',
     @Query('offset') offset = '0',
+    @Query('language') language = 'ko',
   ): Promise<ArticlesFeed> {
     const normalizedLimit = parsePositiveInt(limit, 10, 100);
     const normalizedOffset = parsePositiveInt(offset, 0, 100000);
-    return this.listArticlesUseCase.execute(normalizedLimit, normalizedOffset);
+    return this.listArticlesUseCase.execute(normalizedLimit, normalizedOffset, parseLanguage(language));
   }
 
   @Get(':slug')
-  async getArticle(@Param('slug') slug: string): Promise<{ article: Article }> {
+  async getArticle(@Param('slug') slug: string, @Query('language') language = 'ko'): Promise<{ article: Article }> {
     try {
-      const article = await this.getArticleUseCase.execute(slug);
+      const article = await this.getArticleUseCase.execute(slug, parseLanguage(language));
       return { article };
     } catch (error) {
       if (error instanceof ArticleNotFoundError) {
@@ -73,7 +74,7 @@ export class ArticlesController {
   @Patch(':slug')
   async updateArticle(
     @Param('slug') slug: string,
-    @Body() payload: { article?: Partial<CreateArticleInput> },
+    @Body() payload: { article?: Partial<CreateArticleInput> & Pick<UpdateArticleInput, 'updateScope'> },
   ): Promise<{ article: Article }> {
     try {
       const input = parseUpdateArticleInput(payload);
@@ -120,22 +121,25 @@ function parsePositiveInt(value: string, fallback: number, max: number): number 
 
 function parseCreateArticleInput(payload: { article?: Partial<CreateArticleInput> }): CreateArticleInput {
   const article = payload.article ?? {};
+  const language = parseLanguage(article.language);
   const title = requireText(article.title, 'title');
   const description = requireText(article.description, 'description');
   const body = requireText(article.body, 'body');
   const bodyFormat = parseBodyFormat(article.bodyFormat);
   const tagList = parseTagList(article.tagList);
   const author = parseAuthor(article.author);
-  return { title, description, body, bodyFormat, tagList, author };
+  return { language, title, description, body, bodyFormat, tagList, author };
 }
 
-function parseUpdateArticleInput(payload: { article?: Partial<CreateArticleInput> }): UpdateArticleInput {
+function parseUpdateArticleInput(payload: { article?: Partial<CreateArticleInput> & Pick<UpdateArticleInput, 'updateScope'> }): UpdateArticleInput {
   const article = payload.article;
   if (!article || typeof article !== 'object') {
     throw new BadRequestException({ errors: { body: ['article payload is required'] } });
   }
 
   const input: UpdateArticleInput = {};
+  if (article.language !== undefined) input.language = parseLanguage(article.language);
+  if (article.updateScope !== undefined) input.updateScope = parseUpdateScope(article.updateScope);
   if (typeof article.title === 'string') input.title = requireText(article.title, 'title');
   if (typeof article.description === 'string') input.description = requireText(article.description, 'description');
   if (typeof article.body === 'string') input.body = requireText(article.body, 'body');
@@ -164,6 +168,15 @@ function parseTagList(value: unknown): string[] {
 function parseBodyFormat(value: unknown): ArticleBodyFormat {
   if (value === 'html') return 'html';
   return 'text';
+}
+
+function parseLanguage(value: unknown): ArticleLanguage {
+  if (value === 'en' || value === 'ko' || value === 'ja') return value;
+  return 'ko';
+}
+
+function parseUpdateScope(value: unknown): ArticleUpdateScope {
+  return value === 'current-language' ? 'current-language' : 'all-languages';
 }
 
 function parseAuthor(value: unknown): { username: string; image: string } | undefined {

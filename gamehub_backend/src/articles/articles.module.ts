@@ -14,14 +14,20 @@ import { UploadArticleImageUseCase } from './application/upload-article-image.us
 import { ArticleImageS3Storage } from './infra/s3/article-image-s3.storage';
 import { ARTICLE_IMAGE_STORAGE } from './domain/article-image-upload';
 import { articleImageProviders } from './infra/s3/article-image.tokens';
+import { articleTranslateProviders } from './infra/translate/article-translate.tokens';
+import { AwsArticleContentTranslator } from './infra/translate/aws-article-content-translator';
+import { ARTICLE_CONTENT_TRANSLATOR } from './application/article-content-translator';
+import { ArticlesLocalizationMigratorInitializer } from './infra/dynamodb/articles-localization-migrator.initializer';
 
 @Module({
   controllers: [ArticlesController],
   providers: [
     ...dynamodbProviders,
     ...articleImageProviders,
+    ...articleTranslateProviders,
     DynamoDbTableInitializer,
     ArticlesSeedInitializer,
+    ArticlesLocalizationMigratorInitializer,
     ListArticlesUseCase,
     GetArticleUseCase,
     CreateArticleUseCase,
@@ -35,6 +41,10 @@ import { articleImageProviders } from './infra/s3/article-image.tokens';
     {
       provide: ARTICLE_IMAGE_STORAGE,
       useClass: ArticleImageS3Storage,
+    },
+    {
+      provide: ARTICLE_CONTENT_TRANSLATOR,
+      useClass: AwsArticleContentTranslator,
     },
   ],
 })

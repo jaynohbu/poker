@@ -9,8 +9,8 @@ export const blogImagePositions: BlogImagePosition[] = [
   'bottom-right',
 ];
 
-const INLINE_IMAGE_STYLE = 'max-width:min(15%,120px);width:min(15%,120px);height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
-const INLINE_FIGURE_STYLE = 'box-sizing:border-box;width:15%;max-width:15%;min-width:96px;margin:0 0 1rem 0;overflow:hidden;';
+const INLINE_IMAGE_STYLE = 'width:100%;max-width:180px;height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
+const INLINE_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180px;min-width:120px;margin:0 0 1rem 0;overflow:hidden;';
 
 export function insertBlogImage(
   body: string,

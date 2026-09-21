@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { RouterLink } from '@angular/router';
@@ -31,11 +31,15 @@ export class LandingPage implements OnInit {
   protected readonly latestPosts = signal<BlogArticle[]>([]);
   protected readonly options = [
     { code: 'en' as const, label: 'English' },
-    { code: 'ko' as const, label: '한국어' }
+    { code: 'ko' as const, label: '한국어' },
+    { code: 'ja' as const, label: '日本語' },
   ];
+  private readonly reloadLatestPostsOnLanguage = effect(() => {
+    void this.loadLatestPosts(this.language());
+  });
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadLatestPosts(), this.roleAccess.refresh(), this.refreshAuth()]);
+    await Promise.all([this.roleAccess.refresh(), this.refreshAuth()]);
   }
 
   protected t(key: keyof (typeof translations)['en']): string {
@@ -63,9 +67,11 @@ export class LandingPage implements OnInit {
     }
   }
 
-  private async loadLatestPosts(): Promise<void> {
+  private async loadLatestPosts(language: 'en' | 'ko' | 'ja'): Promise<void> {
+    this.blogLoading.set(true);
+    this.blogError.set(false);
     try {
-      const response = await firstValueFrom(this.blogApi.getLatestArticles(3, 0));
+      const response = await firstValueFrom(this.blogApi.getLatestArticles(3, 0, undefined, language));
       this.latestPosts.set(response.articles);
     } catch {
       this.blogError.set(true);

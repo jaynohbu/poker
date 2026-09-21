@@ -71,6 +71,9 @@ export type TranslationSet = {
   blogEditTitle: string;
   blogEditLead: string;
   blogEditLink: string;
+  blogEditUpdateScopeField: string;
+  blogEditUpdateScopeCurrent: string;
+  blogEditUpdateScopeAll: string;
   blogEditSubmit: string;
   blogEditSubmitting: string;
   blogEditError: string;

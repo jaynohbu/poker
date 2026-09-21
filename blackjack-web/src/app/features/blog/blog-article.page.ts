@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, SecurityContext, inject, signal } from '@angular/core';
+import { Component, OnInit, SecurityContext, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
@@ -9,8 +9,8 @@ import { RoleAccessUseCase } from '../../core/use-cases/role-access.use-case';
 import { BlogApiService } from './blog-api.service';
 import { BlogArticle } from './blog.models';
 
-const INLINE_IMAGE_STYLE = 'max-width:min(15%,120px);width:min(15%,120px);height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
-const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:15%;max-width:15%;min-width:96px;margin:0 0 1rem 0;overflow:hidden;';
+const INLINE_IMAGE_STYLE = 'width:100%;max-width:180px;height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
+const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180px;min-width:120px;margin:0 0 1rem 0;overflow:hidden;';
 
 @Component({
   selector: 'app-blog-article-page',
@@ -104,10 +104,10 @@ const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:15%;max-width:15%;
     '.html-body img { max-width: 100%; height: auto; }',
     '.html-body .blog-layout { display: flow-root; max-width: 100%; }',
     '.html-body .blog-content { min-width: 0; overflow-wrap: anywhere; }',
-    '.html-body .blog-image { box-sizing: border-box; width: 15%; max-width: 15%; min-width: 96px; margin: 0 0 1rem 0; }',
+    '.html-body .blog-image { box-sizing: border-box; width: 22%; max-width: 180px; min-width: 120px; margin: 0 0 1rem 0; }',
     '.html-body .blog-layout--top-left .blog-image, .html-body .blog-layout--bottom-left .blog-image { float: left; margin-right: 1rem; }',
     '.html-body .blog-layout--top-right .blog-image, .html-body .blog-layout--bottom-right .blog-image { float: right; margin-left: 1rem; }',
-    '.html-body .blog-image img { display: block; width: 100%; border-radius: 14px; cursor: zoom-in; }',
+    '.html-body .blog-image img { display: block; width: 100%; max-width: 180px; height: auto; object-fit: contain; border-radius: 14px; cursor: zoom-in; }',
     '.html-body .blog-content p:last-child { margin-bottom: 0; }',
     '.html-body :where(p, ul, ol, pre, blockquote, h2, h3, h4) { margin: 0 0 0.85rem; }',
     '.html-body :where(ul, ol) { padding-left: 1.2rem; }',
@@ -125,7 +125,7 @@ const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:15%;max-width:15%;
     '.dialog-cancel, .dialog-confirm { border: 1px solid #ffffff44; border-radius: 999px; padding: 0.55rem 0.9rem; font-weight: 700; }',
     '.dialog-cancel { background: transparent; color: #fff8e7; }',
     '.dialog-confirm { background: #f8b84c; color: #15362d; }',
-    '@media (max-width: 768px) { .html-body .blog-image { width: 28%; max-width: 28%; min-width: 72px; } }',
+    '@media (max-width: 768px) { .html-body .blog-image { width: 36%; max-width: 140px; min-width: 96px; } .html-body .blog-image img { max-width: 140px; } }',
   ],
 })
 export class BlogArticlePage implements OnInit {
@@ -146,6 +146,12 @@ export class BlogArticlePage implements OnInit {
   protected readonly previewImageAlt = signal('blog image');
   protected readonly error = signal('');
   protected readonly article = signal<BlogArticle | null>(null);
+  private readonly slug = signal('');
+  private readonly reloadOnLanguage = effect(() => {
+    const slug = this.slug();
+    if (!slug) return;
+    void this.loadArticle(slug, this.language());
+  });
 
   protected t(key: keyof (typeof translations)['en']): string {
     return translations[this.language()][key];
@@ -158,15 +164,21 @@ export class BlogArticlePage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.roleAccess.refresh();
-    const slug = this.route.snapshot.paramMap.get('slug');
+    const slug = this.route.snapshot.paramMap.get('slug')?.trim() ?? '';
+    this.slug.set(slug);
     if (!slug) {
       this.error.set(this.t('blogArticleMissingSlug'));
       this.loading.set(false);
       return;
     }
+  }
+
+  private async loadArticle(slug: string, language: 'en' | 'ko' | 'ja'): Promise<void> {
+    this.loading.set(true);
+    this.error.set('');
 
     try {
-      const response = await firstValueFrom(this.api.getArticleBySlug(slug));
+      const response = await firstValueFrom(this.api.getArticleBySlug(slug, language));
       this.article.set(response.article);
     } catch {
       this.error.set(this.t('blogArticleLoadError'));

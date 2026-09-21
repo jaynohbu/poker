@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -6,7 +6,7 @@ import { translations } from '../../core/config/translations';
 import { LanguageStore } from '../../core/i18n/language.store';
 import { ProfileUseCases } from '../../core/use-cases/profile.use-cases';
 import { BlogApiService } from './blog-api.service';
-import { BlogBodyFormat } from './blog.models';
+import { BlogBodyFormat, BlogUpdateScope } from './blog.models';
 import { BlogImagePosition, blogImagePositions, insertBlogImage } from './blog-image.utils';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -61,6 +61,13 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp
           <label>
             {{ t('blogWriteTagsField') }}
             <input type="text" formControlName="tags" />
+          </label>
+          <label>
+            {{ t('blogEditUpdateScopeField') }}
+            <select formControlName="updateScope">
+              <option value="current-language">{{ t('blogEditUpdateScopeCurrent') }}</option>
+              <option value="all-languages">{{ t('blogEditUpdateScopeAll') }}</option>
+            </select>
           </label>
 
           <button class="primary" [disabled]="loading() || form.invalid">
@@ -151,13 +158,20 @@ export class BlogEditPage implements OnInit {
   protected readonly showImageSizeWarningDialog = signal(false);
   protected readonly pendingImageUrl = signal('');
   protected readonly blogImagePositions = blogImagePositions;
+  private readonly slug = signal('');
+  private readonly reloadOnLanguage = effect(() => {
+    const slug = this.slug();
+    if (!slug) return;
+    void this.loadArticle(slug, this.language());
+  });
 
   protected readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
     description: ['', [Validators.required, Validators.minLength(10)]],
     body: ['', [Validators.required, Validators.minLength(20)]],
     bodyFormat: ['text' as BlogBodyFormat],
-    tags: ['']
+    tags: [''],
+    updateScope: ['current-language' as BlogUpdateScope],
   });
 
   protected t(key: keyof (typeof translations)['en']): string {
@@ -165,15 +179,21 @@ export class BlogEditPage implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const slug = this.route.snapshot.paramMap.get('slug');
+    const slug = this.route.snapshot.paramMap.get('slug')?.trim() ?? '';
+    this.slug.set(slug);
     if (!slug) {
       this.error.set(this.t('blogArticleMissingSlug'));
       this.loadingInitial.set(false);
       return;
     }
+  }
+
+  private async loadArticle(slug: string, language: 'en' | 'ko' | 'ja'): Promise<void> {
+    this.loadingInitial.set(true);
+    this.error.set('');
 
     try {
-      const response = await firstValueFrom(this.blogApi.getArticleBySlug(slug));
+      const response = await firstValueFrom(this.blogApi.getArticleBySlug(slug, language));
       const article = response.article;
       this.form.setValue({
         title: article.title,
@@ -181,6 +201,7 @@ export class BlogEditPage implements OnInit {
         body: article.body,
         bodyFormat: article.bodyFormat,
         tags: article.tagList.join(', '),
+        updateScope: this.form.controls.updateScope.getRawValue(),
       });
     } catch {
       this.error.set(this.t('blogArticleLoadError'));
@@ -206,7 +227,8 @@ export class BlogEditPage implements OnInit {
         body: value.body,
         bodyFormat: value.bodyFormat,
         tagList,
-      }));
+        updateScope: value.updateScope,
+      }, this.language()));
       await this.router.navigate(['/blog/article', response.article.slug]);
     } catch {
       this.error.set(this.t('blogEditError'));

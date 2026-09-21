@@ -8,6 +8,7 @@ describe('GetArticleUseCase', () => {
       findArticles: jest.fn(),
       findArticleBySlug: jest.fn().mockResolvedValue({
         slug: 'hello',
+        language: 'ko',
         title: 'Hello',
         description: 'desc',
         body: 'body',
@@ -15,14 +16,24 @@ describe('GetArticleUseCase', () => {
         tagList: ['a'],
         createdAt: '2026-09-19T00:00:00.000Z',
         author: { username: 'u', image: '' },
+        content: {
+          ko: {
+            language: 'ko',
+            title: 'Hello',
+            description: 'desc',
+            body: 'body',
+            bodyFormat: 'text',
+          },
+        },
       }),
       saveArticle: jest.fn(),
       updateArticle: jest.fn(),
       deleteArticle: jest.fn(),
     };
-    const useCase = new GetArticleUseCase(repository);
+    const translator = { translateContent: jest.fn() };
+    const useCase = new GetArticleUseCase(repository, translator as never);
 
-    const result = await useCase.execute('hello');
+    const result = await useCase.execute('hello', 'ko');
 
     expect(result.slug).toBe('hello');
     expect(repository.findArticleBySlug).toHaveBeenCalledWith('hello');
@@ -36,9 +47,10 @@ describe('GetArticleUseCase', () => {
       updateArticle: jest.fn(),
       deleteArticle: jest.fn(),
     };
-    const useCase = new GetArticleUseCase(repository);
+    const translator = { translateContent: jest.fn() };
+    const useCase = new GetArticleUseCase(repository, translator as never);
 
-    await expect(useCase.execute('  ')).rejects.toBeInstanceOf(ArticleNotFoundError);
+    await expect(useCase.execute('  ', 'ko')).rejects.toBeInstanceOf(ArticleNotFoundError);
   });
 
   it('throws when article does not exist', async () => {
@@ -49,8 +61,9 @@ describe('GetArticleUseCase', () => {
       updateArticle: jest.fn(),
       deleteArticle: jest.fn(),
     };
-    const useCase = new GetArticleUseCase(repository);
+    const translator = { translateContent: jest.fn() };
+    const useCase = new GetArticleUseCase(repository, translator as never);
 
-    await expect(useCase.execute('missing')).rejects.toBeInstanceOf(ArticleNotFoundError);
+    await expect(useCase.execute('missing', 'ko')).rejects.toBeInstanceOf(ArticleNotFoundError);
   });
 });

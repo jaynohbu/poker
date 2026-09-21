@@ -5,8 +5,8 @@ describe('ArticlesDynamoDbRepository', () => {
     const client = {
       send: jest.fn().mockResolvedValue({
         Items: [
-          { slug: 'a', createdAt: '2026-01-01', authorUsername: 'u', authorImage: '' },
-          { slug: 'b', createdAt: '2026-01-02', authorUsername: 'u', authorImage: '' },
+          { slug: 'a', language: 'ko', createdAt: '2026-01-01', authorUsername: 'u', authorImage: '', content: {} },
+          { slug: 'b', language: 'ko', createdAt: '2026-01-02', authorUsername: 'u', authorImage: '', content: {} },
         ],
       }),
     };
@@ -24,6 +24,7 @@ describe('ArticlesDynamoDbRepository', () => {
       send: jest.fn().mockResolvedValue({
         Item: {
           slug: 'a',
+          language: 'ko',
           title: 't',
           description: 'd',
           body: 'b',
@@ -32,6 +33,9 @@ describe('ArticlesDynamoDbRepository', () => {
           createdAt: '2026-01-01',
           authorUsername: 'u',
           authorImage: '',
+          content: {
+            ko: { language: 'ko', title: 't', description: 'd', body: 'b', bodyFormat: 'text' },
+          },
         },
       }),
     };
@@ -50,6 +54,7 @@ describe('ArticlesDynamoDbRepository', () => {
     const repository = new ArticlesDynamoDbRepository(client as never, 'tbl');
     const article = {
       slug: 'new-post',
+      language: 'ko',
       title: 'New Post',
       description: 'summary',
       body: 'content',
@@ -57,6 +62,9 @@ describe('ArticlesDynamoDbRepository', () => {
       tagList: ['react'],
       createdAt: '2026-09-19T00:00:00.000Z',
       author: { username: 'u', image: '' },
+      content: {
+        ko: { language: 'ko', title: 'New Post', description: 'summary', body: 'content', bodyFormat: 'text' },
+      },
     };
 
     const result = await repository.saveArticle(article);
@@ -68,6 +76,7 @@ describe('ArticlesDynamoDbRepository', () => {
   it('updates existing article', async () => {
     const existing = {
       slug: 'post-1',
+      language: 'ko',
       title: 'Old',
       description: 'Old desc',
       body: 'Old body',
@@ -75,6 +84,9 @@ describe('ArticlesDynamoDbRepository', () => {
       tagList: ['old'],
       createdAt: '2026-01-01T00:00:00.000Z',
       author: { username: 'u', image: '' },
+      content: {
+        ko: { language: 'ko', title: 'Old', description: 'Old desc', body: 'Old body', bodyFormat: 'text' },
+      },
     };
     const client = {
       send: jest
@@ -114,6 +126,7 @@ describe('ArticlesDynamoDbRepository', () => {
   it('deletes existing article', async () => {
     const existing = {
       slug: 'post-1',
+      language: 'ko',
       title: 'Old',
       description: 'Old desc',
       body: 'Old body',
@@ -122,6 +135,9 @@ describe('ArticlesDynamoDbRepository', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       authorUsername: 'u',
       authorImage: '',
+      content: {
+        ko: { language: 'ko', title: 'Old', description: 'Old desc', body: 'Old body', bodyFormat: 'text' },
+      },
     };
     const client = {
       send: jest
