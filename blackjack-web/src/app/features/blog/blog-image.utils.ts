@@ -1,16 +1,26 @@
 import { BlogBodyFormat } from './blog.models';
 
-export type BlogImagePosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type BlogImagePosition =
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right'
+  | 'top-full'
+  | 'bottom-full';
 
 export const blogImagePositions: BlogImagePosition[] = [
   'top-left',
   'top-right',
+  'top-full',
   'bottom-left',
   'bottom-right',
+  'bottom-full',
 ];
 
 const INLINE_IMAGE_STYLE = 'width:100%;max-width:180px;height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
 const INLINE_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180px;min-width:120px;margin:0 0 1rem 0;overflow:hidden;';
+const INLINE_FULL_IMAGE_STYLE = 'width:100%;max-width:100%;height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
+const INLINE_FULL_FIGURE_STYLE = 'box-sizing:border-box;width:100%;max-width:100%;min-width:0;margin:0 0 1rem 0;overflow:hidden;';
 
 export function insertBlogImage(
   body: string,
@@ -30,9 +40,12 @@ function wrapLayout(content: string, position: BlogImagePosition): string {
 }
 
 function buildFigure(imageUrl: string, position: BlogImagePosition): string {
+  const isFullWidth = isFullWidthPosition(position);
+  const figureStyle = isFullWidth ? INLINE_FULL_FIGURE_STYLE : INLINE_FIGURE_STYLE;
+  const imageStyle = isFullWidth ? INLINE_FULL_IMAGE_STYLE : INLINE_IMAGE_STYLE;
   return `
-    <figure class="blog-image blog-image--${position}" style="${INLINE_FIGURE_STYLE}">
-      <img src="${escapeHtml(imageUrl)}" alt="blog image" style="${INLINE_IMAGE_STYLE}" />
+    <figure class="blog-image blog-image--${position}" style="${figureStyle}">
+      <img src="${escapeHtml(imageUrl)}" alt="blog image" style="${imageStyle}" />
     </figure>
   `.trim();
 }
@@ -56,5 +69,9 @@ function escapeHtml(value: string): string {
 }
 
 function isTopPosition(position: BlogImagePosition): boolean {
-  return position === 'top-left' || position === 'top-right';
+  return position === 'top-left' || position === 'top-right' || position === 'top-full';
+}
+
+function isFullWidthPosition(position: BlogImagePosition): boolean {
+  return position === 'top-full' || position === 'bottom-full';
 }

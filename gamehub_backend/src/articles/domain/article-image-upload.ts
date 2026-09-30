@@ -15,8 +15,13 @@ export type ArticleImageUploadResult = {
   url: string;
 };
 
+export type ArticleImageDeleteInput = {
+  key: string;
+};
+
 export interface ArticleImageStorage {
   upload(key: string, body: Buffer, contentType: string): Promise<string>;
+  delete(key: string): Promise<void>;
 }
 
 export const ARTICLE_IMAGE_STORAGE = Symbol('ARTICLE_IMAGE_STORAGE');

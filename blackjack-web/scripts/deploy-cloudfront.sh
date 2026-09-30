@@ -30,6 +30,9 @@ cat > /tmp/${APP_NAME}-bucket-policy.json <<JSON
 {"Version":"2012-10-17","Statement":[{"Sid":"AllowCloudFrontServicePrincipalReadOnly","Effect":"Allow","Principal":{"Service":"cloudfront.amazonaws.com"},"Action":"s3:GetObject","Resource":"arn:aws:s3:::${BUCKET_NAME}/*","Condition":{"StringEquals":{"AWS:SourceArn":"${DIST_ARN}"}}}]}
 JSON
 aws s3api put-bucket-policy --bucket "$BUCKET_NAME" --policy file:///tmp/${APP_NAME}-bucket-policy.json >/dev/null
-aws s3 sync dist/blackjack-web/browser "s3://${BUCKET_NAME}" --delete >/dev/null
+aws s3 sync dist/blackjack-web/browser "s3://${BUCKET_NAME}" \
+  --delete \
+  --exclude 'blog_images/*' \
+  --exclude 'profile_images/*' >/dev/null
 INV_ID="$(aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths '/*' --query 'Invalidation.Id' --output text)"
 echo "Bucket=$BUCKET_NAME"; echo "Distribution=$DIST_ID"; echo "URL=https://$DIST_DOMAIN"; echo "Invalidation=$INV_ID"

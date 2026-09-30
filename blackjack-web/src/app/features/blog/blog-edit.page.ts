@@ -4,7 +4,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { translations } from '../../core/config/translations';
 import { LanguageStore } from '../../core/i18n/language.store';
+import { CommunitySessionFacade } from '../../core/use-cases/community-session.facade';
 import { ProfileUseCases } from '../../core/use-cases/profile.use-cases';
+import { RoleAccessUseCase } from '../../core/use-cases/role-access.use-case';
+import { canManageArticle } from '../../core/utils/article-permission';
 import { BlogApiService } from './blog-api.service';
 import { BlogBodyFormat, BlogUpdateScope } from './blog.models';
 import { BlogImagePosition, blogImagePositions, insertBlogImage } from './blog-image.utils';
@@ -27,7 +30,7 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp
         <section class="panel"><p>{{ t('blogArticleLoading') }}</p></section>
       }
 
-      @if (!loadingInitial()) {
+      @if (!loadingInitial() && canEditArticle()) {
         <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
           <label>
             {{ t('blogWriteTitleField') }}
@@ -94,6 +97,9 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp
                 <button type="button" class="position-btn" (click)="applyImagePosition(position)">{{ positionLabel(position) }}</button>
               }
             </div>
+            <div class="dialog-actions">
+              <button type="button" class="dialog-cancel" [disabled]="cancelingImage()" (click)="cancelPendingImage()">취소</button>
+            </div>
           </section>
         </div>
       }
@@ -135,8 +141,9 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp
     '.image-preview { border: 1px solid #ffffff2f; border-radius: 16px; background: #00000020; padding: 0.6rem; margin-bottom: 0.8rem; }',
     '.image-preview img { display: block; width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; }',
     '.position-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }',
-    '.position-btn { border: 1px solid #ffffff44; border-radius: 14px; padding: 0.8rem 0.9rem; background: #ffffff10; color: #fff8e7; font-weight: 700; }'
-    ,'.dialog-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }',
+    '.position-btn { border: 1px solid #ffffff44; border-radius: 14px; padding: 0.8rem 0.9rem; background: #ffffff10; color: #fff8e7; font-weight: 700; }',
+    '.dialog-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }',
+    '.dialog-cancel { border: 1px solid #ffffff44; border-radius: 999px; padding: 0.55rem 0.9rem; font-weight: 700; background: transparent; color: #fff8e7; }',
     '.dialog-confirm { border: 1px solid #ffffff44; border-radius: 999px; padding: 0.55rem 0.9rem; font-weight: 700; background: #f8b84c; color: #15362d; }'
   ]
 })
@@ -147,17 +154,23 @@ export class BlogEditPage implements OnInit {
   private readonly blogApi = inject(BlogApiService);
   private readonly languages = inject(LanguageStore);
   private readonly profile = inject(ProfileUseCases);
+  private readonly roleAccess = inject(RoleAccessUseCase);
+  private readonly communitySession = inject(CommunitySessionFacade);
 
   protected readonly language = this.languages.current;
   protected readonly loading = signal(false);
   protected readonly loadingInitial = signal(true);
+  protected readonly canEditArticle = signal(false);
   protected readonly uploadingImage = signal(false);
   protected readonly error = signal('');
   protected readonly imageUploadError = signal('');
+  protected readonly cancelingImage = signal(false);
   protected readonly showImagePositionDialog = signal(false);
   protected readonly showImageSizeWarningDialog = signal(false);
   protected readonly pendingImageUrl = signal('');
+  protected readonly pendingImageKey = signal('');
   protected readonly blogImagePositions = blogImagePositions;
+  private identity: Awaited<ReturnType<CommunitySessionFacade['getCurrentIdentity']>> = null;
   private readonly slug = signal('');
   private readonly reloadOnLanguage = effect(() => {
     const slug = this.slug();
@@ -179,6 +192,8 @@ export class BlogEditPage implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    await this.roleAccess.refresh();
+    this.identity = await this.communitySession.getCurrentIdentity();
     const slug = this.route.snapshot.paramMap.get('slug')?.trim() ?? '';
     this.slug.set(slug);
     if (!slug) {
@@ -195,6 +210,12 @@ export class BlogEditPage implements OnInit {
     try {
       const response = await firstValueFrom(this.blogApi.getArticleBySlug(slug, language));
       const article = response.article;
+      const canEdit = canManageArticle(this.roleAccess.role(), this.identity, article.author.username);
+      this.canEditArticle.set(canEdit);
+      if (!canEdit) {
+        this.error.set('You can only edit your own article.');
+        return;
+      }
       this.form.setValue({
         title: article.title,
         description: article.description,
@@ -205,12 +226,14 @@ export class BlogEditPage implements OnInit {
       });
     } catch {
       this.error.set(this.t('blogArticleLoadError'));
+      this.canEditArticle.set(false);
     } finally {
       this.loadingInitial.set(false);
     }
   }
 
   protected async submit(): Promise<void> {
+    if (!this.canEditArticle()) return;
     if (this.form.invalid) return;
     const slug = this.route.snapshot.paramMap.get('slug');
     if (!slug) return;
@@ -241,8 +264,10 @@ export class BlogEditPage implements OnInit {
     return {
       'top-left': '맨위 왼쪽',
       'top-right': '맨위 오른쪽',
+      'top-full': '맨위 전체 너비',
       'bottom-left': '맨아래 왼쪽',
       'bottom-right': '맨아래 오른쪽',
+      'bottom-full': '맨아래 전체 너비',
     }[position];
   }
 
@@ -261,6 +286,7 @@ export class BlogEditPage implements OnInit {
     try {
       const profile = await this.profile.getProfile();
       const response = await firstValueFrom(this.blogApi.uploadArticleImage(profile.email, file));
+      this.pendingImageKey.set(response.key);
       this.pendingImageUrl.set(response.url);
       this.showImagePositionDialog.set(true);
     } catch {
@@ -274,17 +300,33 @@ export class BlogEditPage implements OnInit {
     const value = this.form.getRawValue();
     const updated = insertBlogImage(value.body, value.bodyFormat, this.pendingImageUrl(), position);
     this.form.patchValue({ body: updated.body, bodyFormat: updated.bodyFormat });
-    this.showImagePositionDialog.set(false);
-    this.pendingImageUrl.set('');
+    this.clearPendingImage();
   }
 
-  protected closeImagePositionDialog(): void {
-    this.showImagePositionDialog.set(false);
-    this.pendingImageUrl.set('');
+  protected async closeImagePositionDialog(): Promise<void> {
+    await this.cancelPendingImage();
   }
 
   protected closeImageSizeWarningDialog(): void {
     this.showImageSizeWarningDialog.set(false);
+  }
+
+  protected async cancelPendingImage(): Promise<void> {
+    const key = this.pendingImageKey();
+    if (!key || this.cancelingImage()) {
+      this.clearPendingImage();
+      return;
+    }
+
+    this.cancelingImage.set(true);
+    try {
+      await firstValueFrom(this.blogApi.deleteArticleImage(key));
+    } catch {
+      this.imageUploadError.set('업로드된 이미지를 삭제하지 못했습니다. 다시 시도해주세요.');
+    } finally {
+      this.cancelingImage.set(false);
+      this.clearPendingImage();
+    }
   }
 
   private isValidImage(file: File): boolean {
@@ -293,5 +335,11 @@ export class BlogEditPage implements OnInit {
       return false;
     }
     return ALLOWED_IMAGE_TYPES.includes(file.type);
+  }
+
+  private clearPendingImage(): void {
+    this.showImagePositionDialog.set(false);
+    this.pendingImageUrl.set('');
+    this.pendingImageKey.set('');
   }
 }

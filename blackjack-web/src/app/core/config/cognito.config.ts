@@ -7,13 +7,11 @@ export const cognitoConfig = {
     domain: 'blackjack-web-086723604095.auth.us-west-2.amazoncognito.com',
     redirectSignIn: [
       'http://localhost:4200/auth/login',
-      'https://d1fqi0i49yjph9.cloudfront.net/auth/login',
       'https://rldojo.net/auth/login',
       'https://www.rldojo.net/auth/login'
     ],
     redirectSignOut: [
       'http://localhost:4200/',
-      'https://d1fqi0i49yjph9.cloudfront.net/',
       'https://rldojo.net/',
       'https://www.rldojo.net/'
     ],

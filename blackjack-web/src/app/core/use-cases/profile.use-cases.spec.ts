@@ -7,13 +7,20 @@ describe('ProfileUseCases', () => {
     getProfile: vi.fn(),
     updateNickname: vi.fn(),
     updateAvatar: vi.fn(),
+    syncArticleAuthorAvatar: vi.fn(),
     changePassword: vi.fn(),
-    uploadAvatar: vi.fn().mockResolvedValue('avatars/test.png')
+    uploadAvatar: vi.fn().mockResolvedValue('profile_images/test.png')
   };
 
   let useCases: ProfileUseCases;
 
   beforeEach(() => {
+    gateway.getProfile.mockResolvedValue({
+      email: 'hero@example.com',
+      nickname: 'hero',
+      avatarKey: 'preset:avatar-1',
+      avatarUrl: 'https://cdn/avatar.png'
+    });
     TestBed.configureTestingModule({
       providers: [ProfileUseCases, { provide: PROFILE_GATEWAY, useValue: gateway }]
     });
@@ -28,12 +35,14 @@ describe('ProfileUseCases', () => {
   it('sets preset avatar', async () => {
     await useCases.setPresetAvatar('preset:avatar-2');
     expect(gateway.updateAvatar).toHaveBeenCalledWith('preset:avatar-2');
+    expect(gateway.syncArticleAuthorAvatar).toHaveBeenCalledWith(['hero'], 'https://cdn/avatar.png');
   });
 
   it('uploads avatar then updates profile', async () => {
     const file = new File(['x'], 'x.png', { type: 'image/png' });
     await useCases.uploadAvatar(file);
     expect(gateway.uploadAvatar).toHaveBeenCalled();
-    expect(gateway.updateAvatar).toHaveBeenCalledWith('avatars/test.png');
+    expect(gateway.updateAvatar).toHaveBeenCalledWith('profile_images/test.png');
+    expect(gateway.syncArticleAuthorAvatar).toHaveBeenCalledWith(['hero'], 'https://cdn/avatar.png');
   });
 });

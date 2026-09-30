@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blackjack OOP Demo</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <h1>Blackjack OOP Demo</h1>
+      <p class="intro">
+        Game decides WHEN, Dealer knows HOW, Deck provides CARD, Player owns CARD.
+      </p>
+
+      <section class="controls">
+        <label for="bet">Bet</label>
+        <input id="bet" type="number" min="1" max="1000" value="50" />
+        <button id="startBtn" type="button">Start Game</button>
+      </section>
+
+      <section class="table">
+        <div class="seat">
+          <h2>Dealer</h2>
+          <p id="dealerHand">Hand: -</p>
+          <p id="dealerValue">Value: -</p>
+        </div>
+        <div class="seat">
+          <h2>Player</h2>
+          <p id="playerHand">Hand: -</p>
+          <p id="playerValue">Value: -</p>
+        </div>
+      </section>
+
+      <section class="status">
+        <p id="betInfo">Bet: -</p>
+        <p id="balanceInfo">Balance left: -</p>
+        <p id="resultInfo">Result: -</p>
+      </section>
+
+      <section>
+        <h3>Action Timeline</h3>
+        <ul id="timeline" class="timeline"></ul>
+      </section>
+    </main>
+
+    <script>
+      const startBtn = document.getElementById('startBtn');
+      const betInput = document.getElementById('bet');
+      const dealerHand = document.getElementById('dealerHand');
+      const dealerValue = document.getElementById('dealerValue');
+      const playerHand = document.getElementById('playerHand');
+      const playerValue = document.getElementById('playerValue');
+      const betInfo = document.getElementById('betInfo');
+      const balanceInfo = document.getElementById('balanceInfo');
+      const resultInfo = document.getElementById('resultInfo');
+      const timeline = document.getElementById('timeline');
+
+      function setHands(event) {
+        dealerHand.textContent = `Hand: ${event.dealer_hand.join(' ') || '-'}`;
+        dealerValue.textContent = `Value: ${event.dealer_value}`;
+        playerHand.textContent = `Hand: ${event.player_hand.join(' ') || '-'}`;
+        playerValue.textContent = `Value: ${event.player_value}`;
+      }
+
+      function addTimeline(event) {
+        const item = document.createElement('li');
+        const cardText = event.card ? ` (${event.card})` : '';
+        item.textContent = `${event.actor} -> ${event.action}${cardText}`;
+        timeline.appendChild(item);
+        timeline.scrollTop = timeline.scrollHeight;
+      }
+
+      async function startGame() {
+        startBtn.disabled = true;
+        timeline.innerHTML = '';
+        resultInfo.textContent = 'Result: Running...';
+
+        const bet = Number(betInput.value || 0);
+        const response = await fetch('/api/start-game', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bet }),
+        });
+
+        const data = await response.json();
+        const events = data.events || [];
+
+        let idx = 0;
+        const delayMs = 950;
+
+        const timer = setInterval(() => {
+          if (idx >= events.length) {
+            clearInterval(timer);
+            const s = data.summary;
+            betInfo.textContent = `Bet: ${s.player_bet}`;
+            balanceInfo.textContent = `Balance left: ${s.balance_left}`;
+            resultInfo.textContent = `Result: ${s.message} (winner: ${s.winner})`;
+            startBtn.disabled = false;
+            return;
+          }
+
+          const event = events[idx];
+          addTimeline(event);
+          setHands(event);
+          idx += 1;
+        }, delayMs);
+      }
+
+      startBtn.addEventListener('click', () => {
+        startGame().catch((error) => {
+          resultInfo.textContent = `Result: failed to start game (${error.message})`;
+          startBtn.disabled = false;
+        });
+      });
+    </script>
+  </body>
+</html>

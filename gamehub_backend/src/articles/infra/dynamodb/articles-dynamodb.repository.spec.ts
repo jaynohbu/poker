@@ -123,6 +123,26 @@ describe('ArticlesDynamoDbRepository', () => {
     expect(client.send).toHaveBeenCalledTimes(1);
   });
 
+  it('syncs author avatar for matching articles', async () => {
+    const client = {
+      send: jest
+        .fn()
+        .mockResolvedValueOnce({
+          Items: [
+            { slug: 'a', language: 'ko', createdAt: '2026-01-01', authorUsername: 'hero', authorImage: '', content: {} },
+            { slug: 'b', language: 'ko', createdAt: '2026-01-02', authorUsername: 'other', authorImage: '', content: {} },
+          ],
+        })
+        .mockResolvedValue({}),
+    };
+    const repository = new ArticlesDynamoDbRepository(client as never, 'tbl');
+
+    const result = await repository.syncAuthorImage(['hero'], 'https://cdn/avatar.png');
+
+    expect(result).toBe(1);
+    expect(client.send).toHaveBeenCalledTimes(2);
+  });
+
   it('deletes existing article', async () => {
     const existing = {
       slug: 'post-1',

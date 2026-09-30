@@ -62,6 +62,7 @@ h2 { margin: 0; font-size: clamp(2rem, 4.5vw, 3.5rem); line-height: 1.03; max-wi
 .site-intro p { margin: 0; line-height: 1.5; font-size: 0.9rem; }
 .actions { display: flex; gap: 0.6rem; margin: 0; }
 .primary { background: linear-gradient(120deg, #f8b84c, #ffd480); color: #0f2a22; border-color: transparent; font-weight: 700; }
+.demo-link { border: 1px solid #ffffff66; background: #ffffff14; color: #fff; border-radius: 10px; padding: 0.45rem 0.8rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 .features { margin-top: auto; display: grid; gap: 0.55rem; }
 .features article { border: 1px solid #ffffff3a; border-radius: 12px; background: #00000020; padding: 0.65rem; }
 .features h3 { margin: 0; font-size: 0.95rem; }

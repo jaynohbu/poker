@@ -1,16 +1,20 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, SecurityContext, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, SecurityContext, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { translations } from '../../core/config/translations';
 import { LanguageStore } from '../../core/i18n/language.store';
+import { CommunitySessionFacade } from '../../core/use-cases/community-session.facade';
 import { RoleAccessUseCase } from '../../core/use-cases/role-access.use-case';
+import { canManageArticle } from '../../core/utils/article-permission';
 import { BlogApiService } from './blog-api.service';
 import { BlogArticle } from './blog.models';
 
 const INLINE_IMAGE_STYLE = 'width:100%;max-width:180px;height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
 const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180px;min-width:120px;margin:0 0 1rem 0;overflow:hidden;';
+const INLINE_FULL_IMAGE_STYLE = 'width:100%;max-width:100%;height:auto;display:block;object-fit:contain;border-radius:14px;cursor:zoom-in;';
+const INLINE_FULL_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:100%;max-width:100%;min-width:0;margin:0 0 1rem 0;overflow:hidden;';
 
 @Component({
   selector: 'app-blog-article-page',
@@ -40,14 +44,21 @@ const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180p
           </p>
           <h1>{{ article()!.title }}</h1>
           <p class="desc">{{ article()!.description }}</p>
-          @if (canWrite()) {
-            <div class="actions">
+          <div class="actions">
+            <button class="copy" type="button" [disabled]="copying()" (click)="copyArticleContent()">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 9h10v12H9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M5 3h10v12H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+              </svg>
+              <span>{{ copyLabel() }}</span>
+            </button>
+            @if (canEditCurrentArticle()) {
               <a class="edit" [routerLink]="['/blog/edit', article()!.slug]">{{ t('blogEditLink') }}</a>
               <button class="delete" type="button" [disabled]="deleting()" (click)="openDeleteDialog()">
                 {{ deleting() ? t('blogDeleteDeleting') : t('blogDeleteLink') }}
               </button>
-            </div>
-          }
+            }
+          </div>
           @if (article()!.bodyFormat === 'html') {
             <div class="body html-body" [innerHTML]="sanitizeHtml(article()!.body)" (click)="onHtmlBodyClick($event)"></div>
           } @else {
@@ -93,8 +104,11 @@ const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180p
     '.meta { margin: 0 0 0.4rem; display: flex; justify-content: space-between; gap: 0.8rem; font-size: 0.86rem; color: #f8dca3; }',
     'h1 { margin: 0 0 0.55rem; font-size: clamp(1.6rem, 3.2vw, 2.4rem); line-height: 1.14; }',
     '.desc { margin: 0 0 1rem; color: #fffbf1d9; line-height: 1.5; }',
-    '.actions { display: flex; gap: 0.5rem; margin: 0 0 0.9rem; }',
-    '.edit, .delete { border: 1px solid #ffffff55; border-radius: 999px; padding: 0.38rem 0.8rem; text-decoration: none; font-weight: 700; font-size: 0.85rem; }',
+    '.actions { display: flex; gap: 0.5rem; margin: 0 0 0.9rem; flex-wrap: wrap; }',
+    '.copy, .edit, .delete { border: 1px solid #ffffff55; border-radius: 999px; padding: 0.38rem 0.8rem; text-decoration: none; font-weight: 700; font-size: 0.85rem; }',
+    '.copy { background: #10231d; color: #f2fffa; display: inline-flex; align-items: center; gap: 0.42rem; cursor: pointer; }',
+    '.copy svg { width: 0.95rem; height: 0.95rem; display: block; }',
+    '.copy[disabled] { opacity: 0.7; cursor: not-allowed; }',
     '.edit { background: #f8b84c; color: #15362d; }',
     '.delete { background: #4e2121; color: #ffd7d7; cursor: pointer; }',
     '.delete[disabled], .dialog-confirm[disabled] { opacity: 0.65; cursor: not-allowed; }',
@@ -107,7 +121,9 @@ const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180p
     '.html-body .blog-image { box-sizing: border-box; width: 22%; max-width: 180px; min-width: 120px; margin: 0 0 1rem 0; }',
     '.html-body .blog-layout--top-left .blog-image, .html-body .blog-layout--bottom-left .blog-image { float: left; margin-right: 1rem; }',
     '.html-body .blog-layout--top-right .blog-image, .html-body .blog-layout--bottom-right .blog-image { float: right; margin-left: 1rem; }',
+    '.html-body .blog-layout--top-full .blog-image, .html-body .blog-layout--bottom-full .blog-image { float: none; margin: 0 0 1rem; width: 100%; max-width: 100%; min-width: 0; }',
     '.html-body .blog-image img { display: block; width: 100%; max-width: 180px; height: auto; object-fit: contain; border-radius: 14px; cursor: zoom-in; }',
+    '.html-body .blog-layout--top-full .blog-image img, .html-body .blog-layout--bottom-full .blog-image img { max-width: 100%; }',
     '.html-body .blog-content p:last-child { margin-bottom: 0; }',
     '.html-body :where(p, ul, ol, pre, blockquote, h2, h3, h4) { margin: 0 0 0.85rem; }',
     '.html-body :where(ul, ol) { padding-left: 1.2rem; }',
@@ -128,24 +144,30 @@ const INLINE_BLOG_FIGURE_STYLE = 'box-sizing:border-box;width:22%;max-width:180p
     '@media (max-width: 768px) { .html-body .blog-image { width: 36%; max-width: 140px; min-width: 96px; } .html-body .blog-image img { max-width: 140px; } }',
   ],
 })
-export class BlogArticlePage implements OnInit {
+export class BlogArticlePage implements OnInit, OnDestroy {
   private readonly api = inject(BlogApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly languages = inject(LanguageStore);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly roleAccess = inject(RoleAccessUseCase);
+  private readonly communitySession = inject(CommunitySessionFacade);
 
   protected readonly language = this.languages.current;
   protected readonly canWrite = this.roleAccess.canWrite;
+  protected readonly canEditCurrentArticle = signal(false);
   protected readonly loading = signal(true);
   protected readonly deleting = signal(false);
+  protected readonly copying = signal(false);
+  protected readonly copyStatus = signal<'idle' | 'success' | 'error'>('idle');
   protected readonly showDeleteDialog = signal(false);
   protected readonly showImagePreviewDialog = signal(false);
   protected readonly previewImageUrl = signal('');
   protected readonly previewImageAlt = signal('blog image');
   protected readonly error = signal('');
   protected readonly article = signal<BlogArticle | null>(null);
+  private identity: Awaited<ReturnType<CommunitySessionFacade['getCurrentIdentity']>> = null;
+  private copyStatusTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly slug = signal('');
   private readonly reloadOnLanguage = effect(() => {
     const slug = this.slug();
@@ -157,6 +179,13 @@ export class BlogArticlePage implements OnInit {
     return translations[this.language()][key];
   }
 
+  protected copyLabel(): string {
+    if (this.copying()) return this.t('blogArticleCopying');
+    if (this.copyStatus() === 'success') return this.t('blogArticleCopied');
+    if (this.copyStatus() === 'error') return this.t('blogArticleCopyFailed');
+    return this.t('blogArticleCopyContent');
+  }
+
   protected sanitizeHtml(raw: string): string {
     const withInlineImageConstraints = applyInlineImageConstraints(raw);
     return this.sanitizer.sanitize(SecurityContext.HTML, withInlineImageConstraints) ?? '';
@@ -164,6 +193,7 @@ export class BlogArticlePage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.roleAccess.refresh();
+    this.identity = await this.communitySession.getCurrentIdentity();
     const slug = this.route.snapshot.paramMap.get('slug')?.trim() ?? '';
     this.slug.set(slug);
     if (!slug) {
@@ -173,6 +203,10 @@ export class BlogArticlePage implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.clearCopyStatusTimer();
+  }
+
   private async loadArticle(slug: string, language: 'en' | 'ko' | 'ja'): Promise<void> {
     this.loading.set(true);
     this.error.set('');
@@ -180,8 +214,12 @@ export class BlogArticlePage implements OnInit {
     try {
       const response = await firstValueFrom(this.api.getArticleBySlug(slug, language));
       this.article.set(response.article);
+      this.canEditCurrentArticle.set(
+        canManageArticle(this.roleAccess.role(), this.identity, response.article.author.username),
+      );
     } catch {
       this.error.set(this.t('blogArticleLoadError'));
+      this.canEditCurrentArticle.set(false);
     } finally {
       this.loading.set(false);
     }
@@ -214,6 +252,18 @@ export class BlogArticlePage implements OnInit {
     this.previewImageAlt.set('blog image');
   }
 
+  protected async copyArticleContent(): Promise<void> {
+    const target = this.article();
+    if (!target || this.copying()) return;
+
+    this.copying.set(true);
+    const text = extractArticleText(target.body, target.bodyFormat === 'html');
+    const copied = await writeToClipboard(text);
+    this.copying.set(false);
+    this.copyStatus.set(copied ? 'success' : 'error');
+    this.scheduleCopyStatusReset();
+  }
+
   protected async confirmDeleteArticle(): Promise<void> {
     const target = this.article();
     if (!target || this.deleting()) return;
@@ -231,16 +281,76 @@ export class BlogArticlePage implements OnInit {
       this.showDeleteDialog.set(false);
     }
   }
+
+  private scheduleCopyStatusReset(): void {
+    this.clearCopyStatusTimer();
+    this.copyStatusTimer = setTimeout(() => this.copyStatus.set('idle'), 2200);
+  }
+
+  private clearCopyStatusTimer(): void {
+    if (!this.copyStatusTimer) return;
+    clearTimeout(this.copyStatusTimer);
+    this.copyStatusTimer = null;
+  }
+}
+
+function extractArticleText(raw: string, isHtml: boolean): string {
+  if (!isHtml) return raw.trim();
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(raw, 'text/html');
+    return (doc.body.textContent ?? '').trim();
+  }
+  return raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function writeToClipboard(text: string): Promise<boolean> {
+  if (!text) return false;
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fallback handled below.
+    }
+  }
+
+  if (typeof document === 'undefined') return false;
+  try {
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', 'true');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    const copied = document.execCommand('copy');
+    input.remove();
+    return copied;
+  } catch {
+    return false;
+  }
 }
 
 function applyInlineImageConstraints(raw: string): string {
   const withFigureStyle = raw.replace(/<figure\b([^>]*\bclass=(['"])[^'"]*\bblog-image\b[^'"]*\2[^>]*)>/gi, (_match, attrs: string) => {
-    return `<figure${mergeInlineStyle(attrs, INLINE_BLOG_FIGURE_STYLE)}>`;
+    return `<figure${mergeInlineStyle(attrs, resolveFigureStyle(attrs))}>`;
   });
 
   return withFigureStyle.replace(/<img\b([^>]*)>/gi, (_match, attrs: string) => {
-    return `<img${mergeInlineStyle(attrs, INLINE_IMAGE_STYLE)}>`;
+    return `<img${mergeInlineStyle(attrs, resolveImageStyle(attrs))}>`;
   });
+}
+
+function resolveFigureStyle(attrs: string): string {
+  return isFullWidthImage(attrs) ? INLINE_FULL_BLOG_FIGURE_STYLE : INLINE_BLOG_FIGURE_STYLE;
+}
+
+function resolveImageStyle(attrs: string): string {
+  return isFullWidthImage(attrs) ? INLINE_FULL_IMAGE_STYLE : INLINE_IMAGE_STYLE;
+}
+
+function isFullWidthImage(attrs: string): boolean {
+  return /\bblog-image--(?:top-full|bottom-full)\b/i.test(attrs);
 }
 
 function mergeInlineStyle(attrs: string, requiredStyle: string): string {

@@ -27,10 +27,19 @@ export class UpdateArticleUseCase {
     const contentMap = normalized.updateScope === 'current-language'
       ? buildCurrentLanguageContentMap(existing, source)
       : await buildTranslatedContentMap(source, source.language, this.translator);
-    const updated = applyContentMap({ ...existing, ...source, content: contentMap }, contentMap);
+    const author = mergeAuthor(existing.author, normalized.author);
+    const updated = applyContentMap({ ...existing, ...source, author, content: contentMap }, contentMap);
     await this.repository.saveArticle(updated);
     return updated;
   }
+}
+
+function mergeAuthor(existing: Article['author'], incoming?: Article['author']): Article['author'] {
+  if (!incoming) return existing;
+  return {
+    username: existing.username,
+    image: incoming.image || existing.image,
+  };
 }
 
 function normalizeInput(input: UpdateArticleInput): UpdateArticleInput {
@@ -43,6 +52,12 @@ function normalizeInput(input: UpdateArticleInput): UpdateArticleInput {
   if (input.bodyFormat === 'html' || input.bodyFormat === 'text') next.bodyFormat = input.bodyFormat;
   if (Array.isArray(input.tagList)) {
     next.tagList = input.tagList.map((tag) => tag.trim()).filter(Boolean);
+  }
+  if (input.author?.username?.trim()) {
+    next.author = {
+      username: input.author.username.trim(),
+      image: input.author.image?.trim() ?? '',
+    };
   }
   return next;
 }

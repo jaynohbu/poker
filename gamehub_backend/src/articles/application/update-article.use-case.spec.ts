@@ -94,6 +94,25 @@ describe('UpdateArticleUseCase', () => {
     expect(translator.translateContent).not.toHaveBeenCalled();
   });
 
+  it('preserves existing author username when author payload is provided', async () => {
+    const repository: ArticlesRepository = {
+      findArticles: jest.fn(),
+      findArticleBySlug: jest.fn().mockResolvedValue(buildArticle()),
+      saveArticle: jest.fn().mockImplementation(async (article) => article),
+      updateArticle: jest.fn(),
+      deleteArticle: jest.fn(),
+    };
+    const translator = { translateContent: jest.fn().mockImplementation(async (content) => content) };
+    const useCase = new UpdateArticleUseCase(repository, translator as never);
+
+    const result = await useCase.execute('hello', {
+      author: { username: '  jane  ', image: ' https://img/jane.png ' },
+      updateScope: 'current-language',
+    });
+
+    expect(result.author).toEqual({ username: 'u', image: 'https://img/jane.png' });
+  });
+
   it('throws when slug is empty', async () => {
     const repository: ArticlesRepository = {
       findArticles: jest.fn(),

@@ -48,6 +48,14 @@ export const routes: Routes = [
 		loadComponent: () => import('./pages/sequence/sequence.page').then((m) => m.SequencePage)
 	},
 	{
+		path: 'demos',
+		loadComponent: () => import('./pages/demos/demos.page').then((m) => m.DemosPage)
+	},
+	{
+		path: 'blackjack-demo',
+		loadComponent: () => import('./pages/blackjack-demo/blackjack-demo.page').then((m) => m.BlackjackDemoPage)
+	},
+	{
 		path: 'pending-4',
 		loadComponent: () => import('./pages/pending-4/pending-4.page').then((m) => m.Pending4Page)
 	},

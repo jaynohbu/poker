@@ -53,6 +53,15 @@ app-blog-article-page .html-body .blog-layout--bottom-right .blog-image {
 	margin-left: 1rem;
 }
 
+app-blog-article-page .html-body .blog-layout--top-full .blog-image,
+app-blog-article-page .html-body .blog-layout--bottom-full .blog-image {
+	float: none;
+	margin: 0 0 1rem;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+}
+
 app-blog-article-page .html-body .blog-image img {
 	display: block;
 	width: 100%;
@@ -61,6 +70,11 @@ app-blog-article-page .html-body .blog-image img {
 	object-fit: contain;
 	border-radius: 14px;
 	cursor: zoom-in;
+}
+
+app-blog-article-page .html-body .blog-layout--top-full .blog-image img,
+app-blog-article-page .html-body .blog-layout--bottom-full .blog-image img {
+	max-width: 100%;
 }
 
 @media (max-width: 768px) {

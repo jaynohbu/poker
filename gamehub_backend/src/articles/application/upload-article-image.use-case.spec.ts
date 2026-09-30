@@ -3,7 +3,7 @@ import { ArticleImageStorage } from '../domain/article-image-upload';
 
 describe('UploadArticleImageUseCase', () => {
   it('uploads file with email-based key', async () => {
-    const storage: ArticleImageStorage = { upload: jest.fn().mockResolvedValue('https://cdn/blog.jpg') };
+    const storage: ArticleImageStorage = { upload: jest.fn().mockResolvedValue('https://cdn/blog.jpg'), delete: jest.fn() };
     const useCase = new UploadArticleImageUseCase(storage);
     const file = { originalname: 'photo.jpg', mimetype: 'image/jpeg', size: 100, buffer: Buffer.from('abc') };
     const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1000);
@@ -16,7 +16,7 @@ describe('UploadArticleImageUseCase', () => {
   });
 
   it('rejects oversized images', async () => {
-    const storage: ArticleImageStorage = { upload: jest.fn() };
+    const storage: ArticleImageStorage = { upload: jest.fn(), delete: jest.fn() };
     const useCase = new UploadArticleImageUseCase(storage);
 
     await expect(

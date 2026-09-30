@@ -1,5 +1,11 @@
 <section class="profile-wrap">
   <h1>Profile</h1>
+  @if (currentAvatarUrl()) {
+    <section class="current-avatar">
+      <p>Current avatar</p>
+      <img [src]="currentAvatarUrl()" alt="Current profile avatar" />
+    </section>
+  }
   <form>
     <label>Email</label>
     <input type="email" [formControl]="form.controls.email" />
@@ -14,7 +20,18 @@
       <button type="button" (click)="setPreset(key)"><img [src]="avatarPresetMap[key]" [alt]="key" /></button>
     }
   </div>
-  <input type="file" accept="image/*" (change)="uploadAvatar($event)" />
+  <input type="file" accept="image/*" (change)="selectAvatar($event)" />
+  @if (pendingAvatarPreviewUrl()) {
+    <section class="pending-avatar">
+      <p>Selected image</p>
+      <img [src]="pendingAvatarPreviewUrl()" [alt]="pendingAvatarName() || 'Selected avatar preview'" />
+      <span>{{ pendingAvatarName() }}</span>
+      <div class="pending-avatar-actions">
+        <button type="button" [disabled]="uploadingAvatar()" (click)="uploadAvatar()">{{ uploadingAvatar() ? 'Uploading...' : 'Upload avatar' }}</button>
+        <button type="button" class="ghost" [disabled]="uploadingAvatar()" (click)="clearAvatarSelection()">Cancel</button>
+      </div>
+    </section>
+  }
 
   <h2>Change Password</h2>
   <form>

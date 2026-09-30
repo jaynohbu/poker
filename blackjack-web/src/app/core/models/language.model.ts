@@ -6,6 +6,7 @@ export type TranslationSet = {
   login: string;
   navHome: string;
   navBlog: string;
+  navBlackjackDemo: string;
   navStory: string;
   navProfile: string;
   navLogout: string;
@@ -51,6 +52,10 @@ export type TranslationSet = {
   blogArticleLoading: string;
   blogArticleMissingSlug: string;
   blogArticleLoadError: string;
+  blogArticleCopyContent: string;
+  blogArticleCopying: string;
+  blogArticleCopied: string;
+  blogArticleCopyFailed: string;
   blogWriteTitle: string;
   blogWriteLead: string;
   blogWriteTitleField: string;

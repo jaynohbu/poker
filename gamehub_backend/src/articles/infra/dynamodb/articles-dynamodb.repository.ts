@@ -72,6 +72,21 @@ export class ArticlesDynamoDbRepository implements ArticlesRepository {
     return updated;
   }
 
+  async syncAuthorImage(usernames: string[], image: string): Promise<number> {
+    const normalizedNames = normalizeUsernames(usernames);
+    if (normalizedNames.length === 0) return 0;
+
+    const command = new ScanCommand({ TableName: this.tableName });
+    const response = await this.client.send(command);
+    const matches = mapItemsToArticles(response.Items).filter((article) => shouldSyncAvatar(article, normalizedNames, image));
+
+    for (const article of matches) {
+      await this.saveArticle({ ...article, author: { ...article.author, image } });
+    }
+
+    return matches.length;
+  }
+
   async deleteArticle(slug: string): Promise<boolean> {
     const existing = await this.findArticleBySlug(slug);
     if (!existing) return false;
@@ -83,4 +98,13 @@ export class ArticlesDynamoDbRepository implements ArticlesRepository {
     await this.client.send(command);
     return true;
   }
+}
+
+function normalizeUsernames(usernames: string[]): string[] {
+  return [...new Set(usernames.map((username) => username.trim().toLowerCase()).filter(Boolean))];
+}
+
+function shouldSyncAvatar(article: Article, usernames: string[], image: string): boolean {
+  const author = article.author.username.trim().toLowerCase();
+  return usernames.includes(author) && article.author.image !== image;
 }

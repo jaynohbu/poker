@@ -95,6 +95,9 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp
                 <button type="button" class="position-btn" (click)="applyImagePosition(position)">{{ positionLabel(position) }}</button>
               }
             </div>
+            <div class="dialog-actions">
+              <button type="button" class="dialog-cancel" [disabled]="cancelingImage()" (click)="cancelPendingImage()">취소</button>
+            </div>
           </section>
         </div>
       }
@@ -141,6 +144,7 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp
     '.position-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }',
     '.position-btn { border: 1px solid #ffffff44; border-radius: 14px; padding: 0.8rem 0.9rem; background: #ffffff10; color: #fff8e7; font-weight: 700; }',
     '.dialog-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }',
+    '.dialog-cancel { border: 1px solid #ffffff44; border-radius: 999px; padding: 0.55rem 0.9rem; font-weight: 700; background: transparent; color: #fff8e7; }',
     '.dialog-confirm { border: 1px solid #ffffff44; border-radius: 999px; padding: 0.55rem 0.9rem; font-weight: 700; background: #f8b84c; color: #15362d; }',
   ]
 })
@@ -157,10 +161,12 @@ export class BlogWritePage {
   protected readonly success = signal(false);
   protected readonly error = signal('');
   protected readonly imageUploadError = signal('');
+  protected readonly cancelingImage = signal(false);
   protected readonly attemptedSubmit = signal(false);
   protected readonly showImagePositionDialog = signal(false);
   protected readonly showImageSizeWarningDialog = signal(false);
   protected readonly pendingImageUrl = signal('');
+  protected readonly pendingImageKey = signal('');
   protected readonly blogImagePositions = blogImagePositions;
 
   protected readonly form = this.fb.nonNullable.group({
@@ -218,8 +224,10 @@ export class BlogWritePage {
     return {
       'top-left': '맨위 왼쪽',
       'top-right': '맨위 오른쪽',
+      'top-full': '맨위 전체 너비',
       'bottom-left': '맨아래 왼쪽',
       'bottom-right': '맨아래 오른쪽',
+      'bottom-full': '맨아래 전체 너비',
     }[position];
   }
 
@@ -238,6 +246,7 @@ export class BlogWritePage {
     try {
       const profile = await this.profile.getProfile();
       const response = await firstValueFrom(this.blogApi.uploadArticleImage(profile.email, file));
+      this.pendingImageKey.set(response.key);
       this.pendingImageUrl.set(response.url);
       this.showImagePositionDialog.set(true);
     } catch {
@@ -251,17 +260,33 @@ export class BlogWritePage {
     const value = this.form.getRawValue();
     const updated = insertBlogImage(value.body, value.bodyFormat, this.pendingImageUrl(), position);
     this.form.patchValue({ body: updated.body, bodyFormat: updated.bodyFormat });
-    this.showImagePositionDialog.set(false);
-    this.pendingImageUrl.set('');
+    this.clearPendingImage();
   }
 
-  protected closeImagePositionDialog(): void {
-    this.showImagePositionDialog.set(false);
-    this.pendingImageUrl.set('');
+  protected async closeImagePositionDialog(): Promise<void> {
+    await this.cancelPendingImage();
   }
 
   protected closeImageSizeWarningDialog(): void {
     this.showImageSizeWarningDialog.set(false);
+  }
+
+  protected async cancelPendingImage(): Promise<void> {
+    const key = this.pendingImageKey();
+    if (!key || this.cancelingImage()) {
+      this.clearPendingImage();
+      return;
+    }
+
+    this.cancelingImage.set(true);
+    try {
+      await firstValueFrom(this.blogApi.deleteArticleImage(key));
+    } catch {
+      this.imageUploadError.set('업로드된 이미지를 삭제하지 못했습니다. 다시 시도해주세요.');
+    } finally {
+      this.cancelingImage.set(false);
+      this.clearPendingImage();
+    }
   }
 
   private resolveErrorMessage(error: unknown): string {
@@ -287,5 +312,11 @@ export class BlogWritePage {
       return false;
     }
     return ALLOWED_IMAGE_TYPES.includes(file.type);
+  }
+
+  private clearPendingImage(): void {
+    this.showImagePositionDialog.set(false);
+    this.pendingImageUrl.set('');
+    this.pendingImageKey.set('');
   }
 }

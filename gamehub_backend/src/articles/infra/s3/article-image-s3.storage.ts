@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ARTICLE_IMAGE_BUCKET_NAME, ARTICLE_IMAGE_BUCKET_REGION, ARTICLE_IMAGE_S3_CLIENT } from './article-image.tokens';
 import { ArticleImageStorage } from '../../domain/article-image-upload';
 
@@ -22,6 +22,10 @@ export class ArticleImageS3Storage implements ArticleImageStorage {
       return `${this.publicBaseUrl}/${encodeKey(key)}`;
     }
     return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${encodeKey(key)}`;
+  }
+
+  async delete(key: string): Promise<void> {
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: key }));
   }
 }
 

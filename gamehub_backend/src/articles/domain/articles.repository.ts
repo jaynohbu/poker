@@ -10,6 +10,7 @@ export interface ArticlesRepository {
   findArticleBySlug(slug: string): Promise<Article | null>;
   saveArticle(article: Article): Promise<Article>;
   updateArticle(slug: string, input: UpdateArticleInput): Promise<Article | null>;
+  syncAuthorImage(usernames: string[], image: string): Promise<number>;
   deleteArticle(slug: string): Promise<boolean>;
 }
 

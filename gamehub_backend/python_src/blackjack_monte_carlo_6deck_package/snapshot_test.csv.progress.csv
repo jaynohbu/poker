@@ -1,0 +1,5 @@
+timestamp_epoch,completed_keys,total_keys,pending_keys,elapsed_sec,keys_per_sec,eta_sec,stop_reason_ci_target_reached,stop_reason_max_simulations_reached,stop_reason_fixed_simulations,simulations_min,simulations_max,simulations_mean,ci95_margin_min,ci95_margin_max,ci95_margin_mean
+1790570697.665,5,20,15,1.688,2.961747,5.065,5,0,0,200,200,200.0,0.03020563,0.03416674,0.03260991
+1790570699.169,10,20,10,3.192,3.132832,3.192,10,0,0,200,200,200.0,0.02547058,0.03865103,0.03229828
+1790570699.274,15,20,5,3.297,4.549592,1.099,15,0,0,200,200,200.0,0.02547058,0.04157788,0.03223798
+1790570700.519,20,20,0,4.542,4.403111,0.0,20,0,0,200,200,200.0,0.02547058,0.04157788,0.0320044
