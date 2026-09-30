@@ -3,6 +3,7 @@ import { ArticlesController } from './articles.controller';
 import { GetArticleUseCase } from './application/get-article.use-case';
 import { ListArticlesUseCase } from './application/list-articles.use-case';
 import { CreateArticleUseCase } from './application/create-article.use-case';
+import { SyncArticleAuthorAvatarUseCase } from './application/sync-article-author-avatar.use-case';
 import { ARTICLES_REPOSITORY } from './domain/articles.repository';
 import { ArticlesDynamoDbRepository } from './infra/dynamodb/articles-dynamodb.repository';
 import { ArticlesSeedInitializer } from './infra/dynamodb/articles-seed.initializer';
@@ -11,11 +12,13 @@ import { dynamodbProviders } from './infra/dynamodb/dynamodb.providers';
 import { UpdateArticleUseCase } from './application/update-article.use-case';
 import { DeleteArticleUseCase } from './application/delete-article.use-case';
 import { UploadArticleImageUseCase } from './application/upload-article-image.use-case';
+import { UploadProfileImageUseCase } from './application/upload-profile-image.use-case';
+import { DeleteArticleImageUseCase } from './application/delete-article-image.use-case';
 import { ArticleImageS3Storage } from './infra/s3/article-image-s3.storage';
 import { ARTICLE_IMAGE_STORAGE } from './domain/article-image-upload';
 import { articleImageProviders } from './infra/s3/article-image.tokens';
 import { articleTranslateProviders } from './infra/translate/article-translate.tokens';
-import { AwsArticleContentTranslator } from './infra/translate/aws-article-content-translator';
+import { OpenAiArticleContentTranslator } from './infra/translate/aws-article-content-translator';
 import { ARTICLE_CONTENT_TRANSLATOR } from './application/article-content-translator';
 import { ArticlesLocalizationMigratorInitializer } from './infra/dynamodb/articles-localization-migrator.initializer';
 
@@ -31,9 +34,12 @@ import { ArticlesLocalizationMigratorInitializer } from './infra/dynamodb/articl
     ListArticlesUseCase,
     GetArticleUseCase,
     CreateArticleUseCase,
+    SyncArticleAuthorAvatarUseCase,
     UpdateArticleUseCase,
     DeleteArticleUseCase,
     UploadArticleImageUseCase,
+    UploadProfileImageUseCase,
+    DeleteArticleImageUseCase,
     {
       provide: ARTICLES_REPOSITORY,
       useClass: ArticlesDynamoDbRepository,
@@ -44,7 +50,7 @@ import { ArticlesLocalizationMigratorInitializer } from './infra/dynamodb/articl
     },
     {
       provide: ARTICLE_CONTENT_TRANSLATOR,
-      useClass: AwsArticleContentTranslator,
+      useClass: OpenAiArticleContentTranslator,
     },
   ],
 })

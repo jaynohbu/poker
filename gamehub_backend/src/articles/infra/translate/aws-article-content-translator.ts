@@ -1,14 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { TranslateClient, TranslateTextCommand } from '@aws-sdk/client-translate';
 import { ArticleContent, ArticleLanguage } from '../../domain/article';
 import { ARTICLE_TRANSLATE_CLIENT } from './article-translate.tokens';
+import type { ArticleTranslateClient } from './article-translate.tokens';
 import { ArticleContentTranslator } from '../../application/article-content-translator';
 
 @Injectable()
-export class AwsArticleContentTranslator implements ArticleContentTranslator {
+export class OpenAiArticleContentTranslator implements ArticleContentTranslator {
   constructor(
     @Inject(ARTICLE_TRANSLATE_CLIENT)
-    private readonly client: TranslateClient,
+    private readonly client: ArticleTranslateClient,
   ) {}
 
   async translateContent(content: ArticleContent, sourceLanguage: ArticleLanguage, targetLanguage: ArticleLanguage): Promise<ArticleContent> {
@@ -29,7 +29,7 @@ export class AwsArticleContentTranslator implements ArticleContentTranslator {
 }
 
 async function translatePlainText(
-  client: TranslateClient,
+  client: ArticleTranslateClient,
   text: string,
   sourceLanguage: ArticleLanguage,
   targetLanguage: ArticleLanguage,
@@ -41,7 +41,7 @@ async function translatePlainText(
 }
 
 async function translateHtml(
-  client: TranslateClient,
+  client: ArticleTranslateClient,
   html: string,
   sourceLanguage: ArticleLanguage,
   targetLanguage: ArticleLanguage,
@@ -78,7 +78,7 @@ function updateCodeState(tag: string, current: boolean): boolean {
 }
 
 async function translateChunk(
-  client: TranslateClient,
+  client: ArticleTranslateClient,
   text: string,
   sourceLanguage: ArticleLanguage,
   targetLanguage: ArticleLanguage,
@@ -86,10 +86,13 @@ async function translateChunk(
   const trimmed = text.trim();
   if (!trimmed) return text;
 
-  const response = await client.send(
-    new TranslateTextCommand({ SourceLanguageCode: sourceLanguage, TargetLanguageCode: targetLanguage, Text: trimmed }),
-  );
-  return restoreWhitespace(text, response.TranslatedText ?? '');
+  const translatedText = await client.translateText({
+    text: trimmed,
+    sourceLanguage,
+    targetLanguage,
+  });
+
+  return restoreWhitespace(text, translatedText);
 }
 
 function splitText(text: string): string[] {

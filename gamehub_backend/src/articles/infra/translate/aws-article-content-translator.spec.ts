@@ -1,15 +1,13 @@
-import { TranslateTextCommand } from '@aws-sdk/client-translate';
-import { AwsArticleContentTranslator } from './aws-article-content-translator';
+import { OpenAiArticleContentTranslator } from './aws-article-content-translator';
 
-describe('AwsArticleContentTranslator', () => {
+describe('OpenAiArticleContentTranslator', () => {
   it('does not translate text inside code tags', async () => {
     const client = {
-      send: jest.fn().mockImplementation(async (command: TranslateTextCommand) => {
-        const text = command.input.Text ?? '';
-        return { TranslatedText: `[${text}]` };
+      translateText: jest.fn().mockImplementation(async ({ text }: { text: string }) => {
+        return `[${text}]`;
       }),
     };
-    const translator = new AwsArticleContentTranslator(client as never);
+    const translator = new OpenAiArticleContentTranslator(client as never);
 
     const result = await translator.translateContent(
       {
@@ -26,9 +24,9 @@ describe('AwsArticleContentTranslator', () => {
     expect(result.body).toContain('<code>const value = 1;</code>');
     expect(result.body).toContain('<p>[설명]</p>');
     expect(result.body).toContain('<p>[마무리]</p>');
-    expect(client.send).toHaveBeenCalled();
-    expect(client.send).not.toHaveBeenCalledWith(
-      expect.objectContaining({ input: expect.objectContaining({ Text: 'const value = 1;' }) }),
+    expect(client.translateText).toHaveBeenCalled();
+    expect(client.translateText).not.toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'const value = 1;' }),
     );
   });
 });

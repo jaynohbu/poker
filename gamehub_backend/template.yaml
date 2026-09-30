@@ -18,9 +18,13 @@ Parameters:
   BlogImagesPublicBaseUrl:
     Type: String
     Default: ''
-  BlogTranslateRegion:
+  OpenAiApiKey:
     Type: String
-    Default: us-west-2
+    Default: ''
+    NoEcho: true
+  OpenAiTranslationModel:
+    Type: String
+    Default: gpt-4o-mini
 
 Globals:
   Function:
@@ -38,7 +42,8 @@ Globals:
         BLOG_IMAGES_BUCKET: !Ref BlogImagesBucket
         BLOG_IMAGES_REGION: !Ref BlogImagesRegion
         BLOG_IMAGES_PUBLIC_BASE_URL: !Ref BlogImagesPublicBaseUrl
-        BLOG_TRANSLATE_REGION: !Ref BlogTranslateRegion
+        OPENAI_API_KEY: !Ref OpenAiApiKey
+        OPENAI_TRANSLATION_MODEL: !Ref OpenAiTranslationModel
 
 Resources:
   ApiGateway:
@@ -74,8 +79,16 @@ Resources:
         - Statement:
             - Effect: Allow
               Action:
-                - translate:TranslateText
-              Resource: '*'
+                - s3:ListBucket
+              Resource: !Sub arn:aws:s3:::${BlogImagesBucket}
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+                - s3:DeleteObject
+              Resource:
+                - !Sub arn:aws:s3:::${BlogImagesBucket}/blog_images/*
+                - !Sub arn:aws:s3:::${BlogImagesBucket}/profile_images/*
       Events:
         Root:
           Type: HttpApi

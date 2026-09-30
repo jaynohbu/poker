@@ -170,4 +170,5 @@ What `lambda:deploy-code` does:
 - `BlogImagesBucket`
 - `BlogImagesRegion`
 - `BlogImagesPublicBaseUrl`
-- `BlogTranslateRegion`
+- `OpenAiApiKey`
+- `OpenAiTranslationModel`
