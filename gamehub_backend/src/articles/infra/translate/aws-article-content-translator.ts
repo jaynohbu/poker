@@ -35,8 +35,9 @@ async function translatePlainText(
   targetLanguage: ArticleLanguage,
 ): Promise<string> {
   const chunks = splitText(text);
-  const translated: string[] = [];
-  for (const chunk of chunks) translated.push(await translateChunk(client, chunk, sourceLanguage, targetLanguage));
+  const translated = await Promise.all(
+    chunks.map((chunk) => translateChunk(client, chunk, sourceLanguage, targetLanguage)),
+  );
   return translated.join('');
 }
 
@@ -47,7 +48,7 @@ async function translateHtml(
   targetLanguage: ArticleLanguage,
 ): Promise<string> {
   const parts = html.split(/(<[^>]+>)/g);
-  const translated: string[] = [];
+  const translated: Array<string | Promise<string>> = [];
   let insideCode = false;
   for (const part of parts) {
     if (!part) {
@@ -66,9 +67,9 @@ async function translateHtml(
       continue;
     }
 
-    translated.push(await translatePlainText(client, part, sourceLanguage, targetLanguage));
+    translated.push(translatePlainText(client, part, sourceLanguage, targetLanguage));
   }
-  return translated.join('');
+  return (await Promise.all(translated)).join('');
 }
 
 function updateCodeState(tag: string, current: boolean): boolean {

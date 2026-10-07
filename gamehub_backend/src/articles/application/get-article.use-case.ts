@@ -27,7 +27,7 @@ export class GetArticleUseCase {
     }
 
     const source = localizeArticle(article, article.language);
-    const translated = await buildTranslatedContentMap(source, source.language, this.translator, [language]);
+    const translated = await buildTranslatedContentMap(source, source.language, this.translator, [language], 'skip');
     if (!translated[language]) {
       return source;
     }

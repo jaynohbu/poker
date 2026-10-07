@@ -27,7 +27,7 @@ export class ListArticlesUseCase {
     if (article.content[language]) return localizeArticle(article, language);
 
     const source = localizeArticle(article, article.language);
-    const translated = await buildTranslatedContentMap(source, source.language, this.translator, [language]);
+    const translated = await buildTranslatedContentMap(source, source.language, this.translator, [language], 'skip');
     if (!translated[language]) {
       return source;
     }

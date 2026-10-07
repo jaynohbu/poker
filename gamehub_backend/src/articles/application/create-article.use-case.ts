@@ -4,7 +4,7 @@ import { Article, ArticleContent, CreateArticleInput } from '../domain/article';
 import { ARTICLES_REPOSITORY } from '../domain/articles.repository';
 import type { ArticlesRepository } from '../domain/articles.repository';
 import { ARTICLE_CONTENT_TRANSLATOR, type ArticleContentTranslator } from './article-content-translator';
-import { applyContentMap, buildTranslatedContentMap } from './article-localization';
+import { applyContentMap } from './article-localization';
 
 @Injectable()
 export class CreateArticleUseCase {
@@ -18,7 +18,8 @@ export class CreateArticleUseCase {
   async execute(input: CreateArticleInput): Promise<Article> {
     const now = new Date().toISOString();
     const content = normalizeSourceContent(input);
-    const contentMap = await buildTranslatedContentMap(content, input.language, this.translator);
+    void this.translator;
+    const contentMap = { [input.language]: content };
     const author = normalizeAuthor(input.author);
     const article: Article = applyContentMap({
       slug: buildSlug(content.title),

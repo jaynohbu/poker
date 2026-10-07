@@ -29,4 +29,27 @@ describe('OpenAiArticleContentTranslator', () => {
       expect.objectContaining({ text: 'const value = 1;' }),
     );
   });
+
+  it('translates long plain text in multiple chunks', async () => {
+    const client = {
+      translateText: jest.fn().mockImplementation(async ({ text }: { text: string }) => text),
+    };
+    const translator = new OpenAiArticleContentTranslator(client as never);
+    const body = 'a'.repeat(9501);
+
+    const result = await translator.translateContent(
+      {
+        language: 'ko',
+        title: body,
+        description: '설명',
+        body,
+        bodyFormat: 'text',
+      },
+      'ko',
+      'en',
+    );
+
+    expect(result.title).toBe(body);
+    expect(client.translateText).toHaveBeenCalledTimes(7);
+  });
 });

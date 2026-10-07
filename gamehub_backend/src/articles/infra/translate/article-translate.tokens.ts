@@ -74,7 +74,13 @@ export const articleTranslateProviders: Provider[] = [
     useFactory: (): ArticleTranslateClient => {
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
-        throw new Error('OPENAI_API_KEY is required for article translation');
+        return {
+          async translateText(input: TranslateTextInput): Promise<string> {
+            throw new Error(
+              `Translation unavailable: OPENAI_API_KEY is not configured (${input.sourceLanguage}->${input.targetLanguage})`,
+            );
+          },
+        };
       }
 
       const model = process.env.OPENAI_TRANSLATION_MODEL ?? 'gpt-4o-mini';

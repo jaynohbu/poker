@@ -49,6 +49,11 @@ export class DemosPage {
       title: 'Blackjack OOP Demo Random actions',
       description: 'Runs one blackjack round with random actions and replay timeline.',
       route: '/blackjack-demo'
+    },
+    {
+      title: 'Blackjack Strategy Comparison',
+      description: 'Automatically compare random play with Monte Carlo choices using the completed 23,520-state results.',
+      route: '/blackjack-compare'
     }
   ];
 }

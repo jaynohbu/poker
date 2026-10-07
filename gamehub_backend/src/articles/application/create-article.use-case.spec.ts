@@ -33,6 +33,7 @@ describe('CreateArticleUseCase', () => {
     expect(result.author).toEqual({ username: 'jane', image: 'https://img/jane.png' });
     expect(result.slug).toMatch(/^test-post-[a-f0-9]{8}$/);
     expect(repository.saveArticle).toHaveBeenCalledTimes(1);
+    expect(translator.translateContent).not.toHaveBeenCalled();
   });
 
   it('falls back to anonymous author when none is provided', async () => {
@@ -56,5 +57,6 @@ describe('CreateArticleUseCase', () => {
     });
 
     expect(result.author).toEqual({ username: 'anonymous-writer', image: '' });
+    expect(translator.translateContent).not.toHaveBeenCalled();
   });
 });

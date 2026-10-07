@@ -7,6 +7,7 @@ export type TranslationSet = {
   navHome: string;
   navBlog: string;
   navBlackjackDemo: string;
+  navBlackjackCompare: string;
   navStory: string;
   navProfile: string;
   navLogout: string;

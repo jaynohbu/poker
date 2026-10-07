@@ -7,6 +7,7 @@
           <button [class.active]="isLanguage(opt.code)" (click)="setLanguage(opt.code)">{{ opt.label }}</button>
         }
       </div>
+      <a class="status-pill" routerLink="/blackjack-compare">{{ t('navBlackjackCompare') }}</a>
       <a class="status-pill" routerLink="/demos">{{ t('navBlackjackDemo') }}</a>
       @if (authenticated()) {
         @if (canWrite()) {

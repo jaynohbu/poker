@@ -37,6 +37,9 @@ import csv
 import math
 import os
 import random
+import shlex
+import subprocess
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -527,6 +530,85 @@ def append_progress_snapshot(path, snapshot, fieldnames):
         f.flush()
         os.fsync(f.fileno())
 
+
+def find_running_similar_job(args):
+    """Return True if a matching blackjack_monte_carlo.py process is already active."""
+    if not args:
+        return False
+
+    target_keys = os.path.abspath(args.keys)
+    target_output = os.path.abspath(args.output)
+    target_checkpoint = os.path.abspath(args.checkpoint or f"{args.output}.checkpoint.csv")
+    target_snapshot = os.path.abspath(args.snapshot_path or f"{args.output}.progress.csv")
+    should_resume = bool(args.resume)
+
+    try:
+        proc = subprocess.run(
+            ["ps", "-eo", "pid,args"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return False
+
+    for line in proc.stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        parts = stripped.split(None, 1)
+        if len(parts) < 2:
+            continue
+        pid_str, cmdline = parts
+        if not pid_str.isdigit():
+            continue
+        try:
+            pid = int(pid_str)
+        except ValueError:
+            continue
+        if pid == os.getpid():
+            continue
+        if "blackjack_monte_carlo.py" not in cmdline:
+            continue
+
+        try:
+            tokens = shlex.split(cmdline)
+        except ValueError:
+            continue
+
+        def flag_value(name):
+            try:
+                i = tokens.index(name)
+                if i + 1 < len(tokens):
+                    return tokens[i + 1]
+            except ValueError:
+                pass
+            return None
+
+        keys = flag_value("--keys")
+        output = flag_value("--output")
+        checkpoint = flag_value("--checkpoint")
+        snapshot = flag_value("--snapshot-path")
+        resume = "--resume" in tokens
+
+        if not keys or not output:
+            continue
+
+        effective_checkpoint = os.path.abspath(checkpoint or f"{output}.checkpoint.csv")
+        effective_snapshot = os.path.abspath(snapshot or f"{output}.progress.csv")
+
+        same_keys = os.path.abspath(keys) == target_keys
+        same_output = os.path.abspath(output) == target_output
+        same_checkpoint = effective_checkpoint == target_checkpoint
+        same_snapshot = effective_snapshot == target_snapshot
+        same_resume = resume == should_resume
+
+        if same_keys and same_output and same_checkpoint and same_snapshot and same_resume:
+            return True
+
+    return False
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--keys", default="blackjack_monte_carlo_6deck_keys.csv")
@@ -553,7 +635,17 @@ def main():
     p.add_argument("--limit", type=int, default=None,
                    help="Only run first N keys; useful for benchmarking.")
     p.add_argument("--seed", type=int, default=20260926)
+    p.add_argument("--force", action="store_true",
+                   help="Force a duplicate launch even if the same run is already active.")
     args = p.parse_args()
+
+    if not args.force and find_running_similar_job(args):
+        print(
+            "Another Monte Carlo run with the same keys/output is already running. "
+            "Use --force to override this guard.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
     rows = load_keys(args.keys, args.limit)
     total = len(rows)

@@ -38,15 +38,29 @@ export async function buildTranslatedContentMap(
   sourceLanguage: ArticleLanguage,
   translator: ArticleContentTranslator,
   targetLanguages: ArticleLanguage[] = ARTICLE_LANGUAGES,
+  onError: 'throw' | 'skip' = 'throw',
 ): Promise<Partial<Record<ArticleLanguage, ArticleContent>>> {
   const content: Partial<Record<ArticleLanguage, ArticleContent>> = { [sourceLanguage]: source };
-  for (const language of targetLanguages) {
-    if (language === sourceLanguage) continue;
-    try {
-      content[language] = await translator.translateContent(source, sourceLanguage, language);
-    } catch {
-      continue;
-    }
+  const translations = await Promise.all(
+    targetLanguages
+      .filter((language) => language !== sourceLanguage)
+      .map(async (language) => {
+        try {
+          const translated = await translator.translateContent(source, sourceLanguage, language);
+          return { language, translated };
+        } catch (error) {
+          if (onError === 'skip') {
+            return null;
+          }
+          const message = error instanceof Error ? error.message : 'unknown translation error';
+          throw new Error(`Failed to translate article content ${sourceLanguage}->${language}: ${message}`);
+        }
+      }),
+  );
+
+  for (const translation of translations) {
+    if (!translation) continue;
+    content[translation.language] = translation.translated;
   }
   return content;
 }

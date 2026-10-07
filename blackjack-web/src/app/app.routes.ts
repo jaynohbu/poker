@@ -52,6 +52,10 @@ export const routes: Routes = [
 		loadComponent: () => import('./pages/demos/demos.page').then((m) => m.DemosPage)
 	},
 	{
+		path: 'blackjack-compare',
+		loadComponent: () => import('./pages/blackjack-compare/blackjack-compare.page').then((m) => m.BlackjackComparePage)
+	},
+	{
 		path: 'blackjack-demo',
 		loadComponent: () => import('./pages/blackjack-demo/blackjack-demo.page').then((m) => m.BlackjackDemoPage)
 	},

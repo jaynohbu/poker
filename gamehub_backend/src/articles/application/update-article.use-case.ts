@@ -3,7 +3,7 @@ import { Article, ArticleContent, UpdateArticleInput } from '../domain/article';
 import { ARTICLES_REPOSITORY } from '../domain/articles.repository';
 import type { ArticlesRepository } from '../domain/articles.repository';
 import { ARTICLE_CONTENT_TRANSLATOR, type ArticleContentTranslator } from './article-content-translator';
-import { applyContentMap, buildTranslatedContentMap, getBaseContent } from './article-localization';
+import { applyContentMap, getBaseContent } from './article-localization';
 import { ArticleNotFoundError } from './article-not-found.error';
 
 @Injectable()
@@ -24,9 +24,10 @@ export class UpdateArticleUseCase {
 
     const normalized = normalizeInput(input);
     const source = mergeSourceContent(existing, normalized);
+    void this.translator;
     const contentMap = normalized.updateScope === 'current-language'
       ? buildCurrentLanguageContentMap(existing, source)
-      : await buildTranslatedContentMap(source, source.language, this.translator);
+      : { [source.language]: source };
     const author = mergeAuthor(existing.author, normalized.author);
     const updated = applyContentMap({ ...existing, ...source, author, content: contentMap }, contentMap);
     await this.repository.saveArticle(updated);

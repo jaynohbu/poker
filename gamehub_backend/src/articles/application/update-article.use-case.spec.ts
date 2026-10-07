@@ -24,10 +24,10 @@ describe('UpdateArticleUseCase', () => {
     expect(result.slug).toBe('hello');
     expect(result.language).toBe('ko');
     expect(repository.saveArticle).toHaveBeenCalledTimes(1);
-    expect(translator.translateContent).toHaveBeenCalled();
+    expect(translator.translateContent).not.toHaveBeenCalled();
   });
 
-  it('re-translates all languages from the selected source', async () => {
+  it('saves only the selected source language for all-language updates', async () => {
     const repository: ArticlesRepository = {
       findArticles: jest.fn(),
       findArticleBySlug: jest.fn().mockResolvedValue(buildArticle()),
@@ -35,13 +35,7 @@ describe('UpdateArticleUseCase', () => {
       updateArticle: jest.fn(),
       deleteArticle: jest.fn(),
     };
-    const translator = {
-      translateContent: jest.fn().mockImplementation(async (content, sourceLanguage, targetLanguage) => ({
-        ...content,
-        language: targetLanguage,
-        title: `${content.title}-${targetLanguage}`,
-      })),
-    };
+    const translator = { translateContent: jest.fn() };
     const useCase = new UpdateArticleUseCase(repository, translator as never);
 
     const result = await useCase.execute('hello', {
@@ -52,6 +46,16 @@ describe('UpdateArticleUseCase', () => {
     expect(result.language).toBe('en');
     expect(result.title).toBe('Hello EN');
     expect(repository.saveArticle).toHaveBeenCalledTimes(1);
+    expect(result.content).toEqual({
+      en: {
+        language: 'en',
+        title: 'Hello EN',
+        description: 'desc',
+        body: 'body',
+        bodyFormat: 'html',
+      },
+    });
+    expect(translator.translateContent).not.toHaveBeenCalled();
   });
 
   it('updates only the current language when requested', async () => {
@@ -139,6 +143,36 @@ describe('UpdateArticleUseCase', () => {
     const useCase = new UpdateArticleUseCase(repository, translator as never);
 
     await expect(useCase.execute('missing', { title: 'x' })).rejects.toBeInstanceOf(ArticleNotFoundError);
+  });
+
+  it('saves the source language when all-language update is requested', async () => {
+    const repository: ArticlesRepository = {
+      findArticles: jest.fn(),
+      findArticleBySlug: jest.fn().mockResolvedValue(buildArticle()),
+      saveArticle: jest.fn(),
+      updateArticle: jest.fn(),
+      deleteArticle: jest.fn(),
+    };
+    const translator = { translateContent: jest.fn() };
+    const useCase = new UpdateArticleUseCase(repository, translator as never);
+
+    const result = await useCase.execute('hello', {
+      language: 'ko',
+      title: 'updated title',
+      updateScope: 'all-languages',
+    });
+
+    expect(result.content).toEqual({
+      ko: {
+        language: 'ko',
+        title: 'updated title',
+        description: 'desc',
+        body: 'body',
+        bodyFormat: 'html',
+      },
+    });
+    expect(translator.translateContent).not.toHaveBeenCalled();
+    expect(repository.saveArticle).toHaveBeenCalledTimes(1);
   });
 });
 
